@@ -42,7 +42,7 @@ public class UserPrinciple implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.fullName;
+        return email;
     }
 
     @Override

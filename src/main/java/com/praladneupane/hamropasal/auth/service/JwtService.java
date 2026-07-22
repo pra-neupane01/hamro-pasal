@@ -23,7 +23,7 @@ public class JwtService {
         return Keys.hmacShaKeyFor(byteStreams);
     }
 
-    public String getJwt(UserPrinciple userPrinciple) {
+    public String generateToken(UserPrinciple userPrinciple) {
         return Jwts.builder()
                 .signWith(generateKey())
                 .subject(userPrinciple.getUsername())
@@ -43,23 +43,27 @@ public class JwtService {
 
     }
 
-    private <T> T extractSpecificClaim(String token, Function<Claims, T> claimsTFunction) {
-        Claims claims = extractClaims(token);
-        return claimsTFunction.apply(claims);
-
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> resolver
+    ) {
+        return resolver.apply(extractClaims(token));
     }
 
     public String extractUsername(String token) {
-        return extractSpecificClaim(token, (Claims::getSubject));
+        return extractClaim(token, Claims::getSubject);
     }
 
     public Date extractExpiry(String token) {
-        return extractSpecificClaim(token, Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);
+    }
+    public boolean validateToken(String token, UserPrinciple userPrinciple) {
+        return !isTokenExpired(token)
+                && extractUsername(token).equals(userPrinciple.getUsername());
     }
 
-    public boolean verifyToken(String token, UserPrinciple userPrinciple) {
-        return extractExpiry(token).after(new Date(System.currentTimeMillis()))
-                && extractUsername(token).equals(userPrinciple.getUsername());
+    private boolean isTokenExpired(String token) {
+        return extractExpiry(token).before(new Date());
     }
 
 

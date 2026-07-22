@@ -6,5 +6,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Permission {
-    PRODUCT_ADD
+    PRODUCT_ADD,
+
+
+    USER_ADD
 }
