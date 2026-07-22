@@ -1,26 +1,35 @@
 package com.praladneupane.hamropasal.common.dto.response;
 
+import lombok.Builder;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+@Builder
 public record PagedResponse<T>(
         List<T> content,
-        int pageNo,
-        int pageSize,
+        int page,
+        int size,
         long totalElements,
         int totalPages,
-        boolean isLast
-) {
+        boolean last,
+        boolean first,
+        boolean hasNext,
+        boolean hasPrevious,
+        long number
 
-    public static <T> PagedResponse<T> from(Page<T> page) {
-        return new PagedResponse<>(
-                page.getContent(),
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.isLast()
-        );
+) {
+    public static <T> PagedResponse<T> toPagedResponse(Page<T> page) {
+        return PagedResponse.<T>builder()
+                .content(page.getContent())
+                .page(page.getTotalPages())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .last(page.isLast())
+                .first(page.isFirst())
+                .hasNext(page.hasNext())
+                .hasPrevious(page.hasPrevious())
+                .number(page.getNumber())
+                .build();
     }
 }
