@@ -1,33 +1,74 @@
-HELP.md
+# Build output and target directory
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+build/
+out/
+bin/
+*.jar
+*.war
+*.ear
+*.rar
+!.mvn/wrapper/maven-wrapper.jar
 
-### STS ###
-.apt_generated
+# Environment files & Secrets
+.env
+.env.*
+*.env
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+credentials.json
+secrets.properties
+secret*.yaml
+secret*.yml
+
+# Local configuration overrides
+application-local.yaml
+application-local.yml
+application-local.properties
+application-secrets.yaml
+application-secrets.yml
+application-secrets.properties
+
+# Logs & Dumps
+*.log
+logs/
+*.dump
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
+.sts4-cache/
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# OS metadata & temp files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+tmp/

@@ -1,6 +1,5 @@
 package com.praladneupane.hamropasal.user.mapper;
 
-import com.praladneupane.hamropasal.auth.dto.request.UserLoginRequest;
 import com.praladneupane.hamropasal.auth.dto.response.UserLoginResponse;
 import com.praladneupane.hamropasal.user.dto.request.CreateUserRequest;
 import com.praladneupane.hamropasal.user.dto.response.UserResponse;
@@ -31,7 +30,9 @@ public class UserMapper {
 
         return UserLoginResponse.builder()
                 .id(user.getId())
+                .fullName(user.getFullName())
                 .email(user.getEmail())
+                .contactNumber(user.getContactNumber())
                 .role(user.getRole())
                 .token(jwt)
                 .build();
