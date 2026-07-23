@@ -1,9 +1,7 @@
 package com.praladneupane.hamropasal.product.entity;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,7 +34,8 @@ public class Product extends BaseEntity {
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "category")
-    private String category;
-    
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
 }
