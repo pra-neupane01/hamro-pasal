@@ -8,7 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 public record UpdateProductRequest(
-        @NotNull Long productId,
+        @NotNull(message = "product ID is required")
+        Long productId,
         @Size(max = 150, message = "product name must not exceed 150 characters")
         String name,
         @Size(max = 500, message = "description must not exceed 500 characters")

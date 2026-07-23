@@ -22,8 +22,9 @@ public class Inventory extends BaseEntity {
     @Column(name = "quantity_in_stock", nullable = false)
     private Integer quantityInStock;
 
+    @Builder.Default
     @Column(name = "low_stock_threshold", nullable = false)
-    private Integer lowStockThreshold;
+    private Integer lowStockThreshold = 10;
 
     @Column(name = "warehouse_location")
     private String warehouseLocation;

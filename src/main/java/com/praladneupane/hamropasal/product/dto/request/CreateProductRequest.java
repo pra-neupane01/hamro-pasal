@@ -1,10 +1,6 @@
 package com.praladneupane.hamropasal.product.dto.request;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
@@ -30,6 +26,13 @@ public record CreateProductRequest(
         BigDecimal price,
 
         @NotNull(message = "category is required")
-        Long categoryId
+        Long categoryId,
+
+        @NotNull(message = "quantity is required")
+        @Min(value = 0, message = "quantity must not be negative")
+        Integer quantity,
+
+        @Size(max = 150, message = "warehouse location must not exceed 150 characters")
+        String warehouseLocation
 ) {
 }
