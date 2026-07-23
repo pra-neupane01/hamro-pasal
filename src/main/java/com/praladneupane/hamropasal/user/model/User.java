@@ -2,15 +2,14 @@ package com.praladneupane.hamropasal.user.model;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
-@RequiredArgsConstructor
-@Builder
+@SuperBuilder
 @Getter
 @Setter
 public class User extends BaseEntity {
