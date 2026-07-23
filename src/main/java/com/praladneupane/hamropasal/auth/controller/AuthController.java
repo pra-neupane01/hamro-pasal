@@ -4,6 +4,7 @@ import com.praladneupane.hamropasal.auth.dto.request.UserLoginRequest;
 import com.praladneupane.hamropasal.auth.dto.response.UserLoginResponse;
 import com.praladneupane.hamropasal.auth.service.AuthService;
 import com.praladneupane.hamropasal.common.dto.response.APIResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<APIResponse<UserLoginResponse>> loginUser(@RequestBody UserLoginRequest request){
+    public ResponseEntity<APIResponse<UserLoginResponse>> loginUser(@RequestBody @Valid  UserLoginRequest request){
         UserLoginResponse loginResponse = authService.login(request);
         APIResponse<UserLoginResponse> apiResponse = APIResponse.<UserLoginResponse>builder()
                 .data(loginResponse)

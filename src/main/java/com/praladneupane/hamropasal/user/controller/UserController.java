@@ -5,11 +5,10 @@ import com.praladneupane.hamropasal.common.dto.response.APIResponse;
 import com.praladneupane.hamropasal.common.dto.response.PagedResponse;
 import com.praladneupane.hamropasal.user.dto.request.CreateUserRequest;
 import com.praladneupane.hamropasal.user.dto.response.UserResponse;
-import com.praladneupane.hamropasal.user.service.impl.UserServiceImpl;
+import com.praladneupane.hamropasal.user.service.UserService;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.converters.models.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +16,9 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/user")
+@RequestMapping("/users")
 public class UserController {
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<APIResponse<UserResponse>> registerUser(@RequestBody @Valid CreateUserRequest request){
@@ -30,11 +29,12 @@ public class UserController {
                 .success(true)
                 .timestamp(LocalDateTime.now())
                 .build();
-        return ResponseEntity.ok(apiResponse);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(apiResponse);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<APIResponse<UserResponse>> updateUser(@PathVariable Long id, @RequestBody CreateUserRequest request){
+    @PutMapping("/{id}")
+    public ResponseEntity<APIResponse<UserResponse>> updateUser(@PathVariable Long id, @RequestBody @Valid CreateUserRequest request){
         UserResponse userResponse = userService.update(id, request);
         APIResponse<UserResponse> apiResponse = APIResponse.<UserResponse>builder()
                 .success(true)
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<APIResponse<PagedResponse<UserResponse>>> getUsers(PaginationRequest paginationRequest){
+    public ResponseEntity<APIResponse<PagedResponse<UserResponse>>> getUsers(@ModelAttribute PaginationRequest paginationRequest){
         PagedResponse<UserResponse> usersPage = userService.getAllUsers(paginationRequest.toPageable());
         APIResponse<PagedResponse<UserResponse>> apiResponse = APIResponse.<PagedResponse<UserResponse>>builder()
                 .success(true)
