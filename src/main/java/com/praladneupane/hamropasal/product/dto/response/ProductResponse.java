@@ -3,11 +3,10 @@ package com.praladneupane.hamropasal.product.dto.response;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Builder
-public record CreateProductResponse(
-        UUID productId,
+public record ProductResponse(
+        Long productId,
         String productName,
         String description,
         String sku,

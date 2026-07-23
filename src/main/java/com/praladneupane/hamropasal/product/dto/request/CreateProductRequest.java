@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public record CreateProductRequest(
         @NotBlank(message = "product name is required")
@@ -31,6 +30,6 @@ public record CreateProductRequest(
         BigDecimal price,
 
         @NotNull(message = "category is required")
-        UUID categoryId
+        Long categoryId
 ) {
 }

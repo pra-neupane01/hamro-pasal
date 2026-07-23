@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,19 +36,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Transactional(readOnly = true)
     @Override
-    public CategoryResponse getCategory(UUID id) {
+    public CategoryResponse getCategory(Long id) {
         Category category = findCategory(id);
         return categoryMapper.toResponse(category);
     }
 
-    private Category findCategory(UUID id) {
+    private Category findCategory(Long id) {
         return categoryRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException("Category Not Found"));
     }
 
     @Override
     @Transactional
-    public CategoryResponse updateCategory(UpdateCategoryRequest request, UUID categoryId) {
+    public CategoryResponse updateCategory(UpdateCategoryRequest request, Long categoryId) {
         Category category = findCategory(categoryId);
         if (request.name() != null) {
             category.setName(request.name());
