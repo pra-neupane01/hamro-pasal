@@ -1,7 +1,10 @@
 package com.praladneupane.hamropasal.sale.entity;
 
+import com.praladneupane.hamropasal.common.model.BaseEntity;
+import com.praladneupane.hamropasal.sale.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,15 +14,17 @@ import java.util.List;
 @Table(name = "sales")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Getter
 @Setter
-public class Sale {
+public class Sale extends BaseEntity {
+
     @Column(name = "cashier_name")
     private String cashierName;
 
     @Column(name = "payment_method")
-    private com.praladneupane.hamropasal.sale.entity.enums.PaymentMethod paymentMethod;
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
 
     @Column(name = "sales_date")
     private String saleDate;
@@ -33,9 +38,7 @@ public class Sale {
     @Column(name = "net_amount")
     private BigDecimal netAmount;
 
-    @OneToMany(mappedBy = "sales", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "sale", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SaleItem> saleItems = new ArrayList<>();
-
-
 }
