@@ -75,6 +75,14 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toResponse(product);
     }
 
+    @Override
+    public void deleteProduct(Long id) {
+        int rowsDeleted = productRepository.deleteProduct(id);
+        if (rowsDeleted <= 0) {
+            throw new BusinessException("Failed to delete the product");
+        }
+    }
+
 
     // Private helpers methods
     private void checkIfProductAlreadyExists(String name, String sku, String barcode) {

@@ -19,18 +19,13 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final InventoryMapper inventoryMapper;
 
-    private static void validateQuantity(Integer quantity) {
-        if (quantity <= 0) {
-            throw new BusinessException("Quantity should be grater than zero");
-        }
-    }
 
     @Override
+    @Transactional
     public void createInventory(ProductCreatedEvent event) {
         checkIfInventoryExists(event);
         Inventory inventory = inventoryMapper.toEntity(event);
         inventoryRepository.save(inventory);
-
     }
 
     @Override
@@ -42,8 +37,8 @@ public class InventoryServiceImpl implements InventoryService {
         return getResponse(inventory);
     }
 
-
     @Override
+    @Transactional
     public InventoryUpdateResponse reduceStock(SellProductRequest request) {
         validateQuantity(request.quantity());
         Inventory inventory = findInventory(request.productId());
@@ -52,7 +47,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     }
 
-
+    //Private helpers methods
     private void checkIfInventoryExists(ProductCreatedEvent event) {
         if (inventoryRepository.existsByProductId(event.productId())) {
             throw new BusinessException("Inventory already exists");
@@ -69,6 +64,12 @@ public class InventoryServiceImpl implements InventoryService {
                 .productName(inventory.getProduct().getName())
                 .newQuantity(inventory.getQuantityInStock())
                 .build();
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException("Quantity should be grater than zero");
+        }
     }
 
 }

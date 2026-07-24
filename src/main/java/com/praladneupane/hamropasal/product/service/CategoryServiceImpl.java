@@ -59,6 +59,14 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryMapper.toResponse(category);
     }
 
+    @Override
+    public void deleteCategory(Long id) {
+        int rowsDeleted = categoryRepository.deleteCategory(id);
+        if (rowsDeleted <= 0) {
+            throw new BusinessException("Failed to delete the category");
+        }
+    }
+
 
     private void checkIfCategoryExists(String name) {
         if (categoryRepository.existsByName(name)) {
