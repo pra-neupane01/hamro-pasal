@@ -52,11 +52,16 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public List<LowStockNotification> getLowStockProducts() {
-        return inventoryRepository.findAll().stream().map(inventory -> LowStockNotification.builder()
-                .productId(inventory.getProduct().getId())
-                .productName(inventory.getProduct().getName())
-                .currentValue(inventory.getQuantityInStock())
-                .build()).filter(lowStockNotification -> lowStockNotification.currentValue() < 10).toList();
+        return inventoryRepository.findAll().stream()
+                .filter(inventory -> inventory.getQuantityInStock() <= inventory.getLowStockThreshold())
+                .map(inventory -> LowStockNotification.builder()
+                        .productId(inventory.getProduct().getId())
+                        .productName(inventory.getProduct().getName())
+                        .sku(inventory.getProduct().getSku())
+                        .currentValue(inventory.getQuantityInStock())
+                        .threshold(inventory.getLowStockThreshold())
+                        .build())
+                .toList();
     }
 
     //Private helpers methods

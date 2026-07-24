@@ -6,6 +6,8 @@ import lombok.Builder;
 public record LowStockNotification(
         Long productId,
         String productName,
-        Integer currentValue
+        String sku,
+        Integer currentValue,
+        Integer threshold
 ) {
 }
