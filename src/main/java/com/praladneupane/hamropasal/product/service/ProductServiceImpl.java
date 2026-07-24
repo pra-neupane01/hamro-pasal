@@ -28,7 +28,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductSpecification productSpecification;
     private final ApplicationEventPublisher applicationEventPublisher;
-    ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
     @Override
     @Transactional
@@ -37,7 +37,20 @@ public class ProductServiceImpl implements ProductService {
         Product product = productMapper.toEntity(request);
         Product savedProduct = productRepository.save(product);
         applicationEventPublisher.publishEvent(getEvent(request, savedProduct));
-        return productMapper.toResponse(savedProduct);
+        ProductResponse response = productMapper.toResponse(savedProduct);
+        if (response.quantity() == null && request.quantity() != null) {
+            response = ProductResponse.builder()
+                    .productId(response.productId())
+                    .productName(response.productName())
+                    .description(response.description())
+                    .sku(response.sku())
+                    .barcode(response.barcode())
+                    .price(response.price())
+                    .categoryName(response.categoryName())
+                    .quantity(request.quantity())
+                    .build();
+        }
+        return response;
     }
 
     private ProductCreatedEvent getEvent(CreateProductRequest request, Product product) {

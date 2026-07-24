@@ -12,6 +12,7 @@ public record ProductResponse(
         String sku,
         String barcode,
         BigDecimal price,
-        String categoryName
+        String categoryName,
+        Integer quantity
 ) {
 }

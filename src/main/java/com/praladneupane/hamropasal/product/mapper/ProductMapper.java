@@ -10,10 +10,12 @@ import org.mapstruct.Mapping;
 public interface ProductMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "inventory", ignore = true)
     Product toEntity(CreateProductRequest request);
 
     @Mapping(source = "id", target = "productId")
     @Mapping(source = "name", target = "productName")
     @Mapping(source = "category.name", target = "categoryName")
+    @Mapping(source = "inventory.quantityInStock", target = "quantity")
     ProductResponse toResponse(Product product);
 }
