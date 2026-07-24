@@ -15,4 +15,6 @@ public interface ProductService {
     ProductResponse updateProduct(UpdateProductRequest request);
 
     ProductResponse getProduct(Long id);
+
+    void deleteProduct(Long id);
 }
