@@ -1,4 +1,4 @@
-package com.praladneupane.hamropasal.auth.config;
+package com.praladneupane.hamropasal.common.config;
 
 import lombok.Getter;
 import lombok.Setter;

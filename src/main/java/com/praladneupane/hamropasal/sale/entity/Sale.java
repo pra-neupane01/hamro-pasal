@@ -1,7 +1,6 @@
 package com.praladneupane.hamropasal.sale.entity;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
-import com.praladneupane.hamropasal.sale.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -21,6 +20,9 @@ public class Sale extends BaseEntity {
 
     @Column(name = "cashier_name")
     private String cashierName;
+
+    @Column(name = "cashier_email")
+    private String cashierEmail;
 
     @Column(name = "payment_method")
     @Enumerated(EnumType.STRING)
