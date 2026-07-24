@@ -1,7 +1,6 @@
 package com.praladneupane.hamropasal.sale.entity;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
-import com.praladneupane.hamropasal.sale.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
