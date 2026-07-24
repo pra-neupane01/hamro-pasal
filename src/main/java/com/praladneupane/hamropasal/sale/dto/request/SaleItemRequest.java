@@ -8,6 +8,6 @@ public record SaleItemRequest(
         Long productId,
 
         @NotNull(message = "quantity is required")
-        @Positive(message = "Quantity must be greater than 0")
+        @Positive(message = "Quantity must be greater than zero")
         Integer quantity) {
 }

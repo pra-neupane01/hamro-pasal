@@ -21,6 +21,9 @@ public class Sale extends BaseEntity {
     @Column(name = "cashier_name")
     private String cashierName;
 
+    @Column(name = "cashier_email")
+    private String cashierEmail;
+
     @Column(name = "payment_method")
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
