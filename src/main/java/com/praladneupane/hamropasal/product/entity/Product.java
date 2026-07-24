@@ -1,6 +1,7 @@
 package com.praladneupane.hamropasal.product.entity;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
+import com.praladneupane.hamropasal.inventory.entity.Inventory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,5 +38,8 @@ public class Product extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @OneToOne(mappedBy = "product", fetch = FetchType.LAZY)
+    private Inventory inventory;
 
 }

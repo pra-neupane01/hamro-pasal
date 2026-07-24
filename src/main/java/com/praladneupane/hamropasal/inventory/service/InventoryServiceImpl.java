@@ -1,5 +1,6 @@
 package com.praladneupane.hamropasal.inventory.service;
 
+import com.praladneupane.hamropasal.common.dto.response.LowStockNotification;
 import com.praladneupane.hamropasal.common.events.ProductCreatedEvent;
 import com.praladneupane.hamropasal.common.exception.BusinessException;
 import com.praladneupane.hamropasal.common.exception.ResourceNotFoundException;
@@ -12,6 +13,8 @@ import com.praladneupane.hamropasal.inventory.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +48,15 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setQuantityInStock(inventory.getQuantityInStock() - request.quantity());
         return getResponse(inventory);
 
+    }
+
+    @Override
+    public List<LowStockNotification> getLowStockProducts() {
+        return inventoryRepository.findAll().stream().map(inventory -> LowStockNotification.builder()
+                .productId(inventory.getProduct().getId())
+                .productName(inventory.getProduct().getName())
+                .currentValue(inventory.getQuantityInStock())
+                .build()).filter(lowStockNotification -> lowStockNotification.currentValue() < 10).toList();
     }
 
     //Private helpers methods

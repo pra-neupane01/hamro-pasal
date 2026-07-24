@@ -14,7 +14,6 @@ public class ProductCreatedEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void createInventory(ProductCreatedEvent event) {
-
-
+        inventoryServiceImpl.createInventory(event);
     }
 }
