@@ -64,6 +64,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .toList();
     }
 
+
     //Private helpers methods
     private void checkIfInventoryExists(ProductCreatedEvent event) {
         if (inventoryRepository.existsByProductId(event.productId())) {
