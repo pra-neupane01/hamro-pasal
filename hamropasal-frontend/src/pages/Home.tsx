@@ -1,293 +1,219 @@
 import { Link } from 'react-router-dom';
 import {
-  FaBoxOpen,
-  FaChartLine,
-  FaUsers,
-  FaTruckLoading,
-  FaShoppingCart,
-  FaBox,
-  FaDollarSign,
-  FaExclamationTriangle,
-  FaUserPlus,
-  FaChartBar,
-  FaShieldAlt,
-  FaQuoteLeft,
-  FaUserCircle
+  FaBoxOpen, FaChartLine, FaUsers, FaTruck, FaShieldAlt,
+  FaArrowRight, FaCheckCircle, FaStar, FaQuoteLeft,
 } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+
+const features = [
+  {
+    icon: FaBoxOpen,
+    title: 'Product Management',
+    desc: 'Full catalog with categories, SKU, barcode scanning, and bulk operations.',
+    color: 'bg-indigo-100 text-indigo-600',
+  },
+  {
+    icon: FaChartLine,
+    title: 'Sales & POS',
+    desc: 'Fast checkout, multiple payment methods (Cash, eSewa, Banking), printed receipts.',
+    color: 'bg-green-100 text-green-600',
+  },
+  {
+    icon: FaBoxOpen,
+    title: 'Inventory Control',
+    desc: 'Real-time stock tracking, low-stock alerts, reorder thresholds, and warehouse locations.',
+    color: 'bg-amber-100 text-amber-600',
+  },
+  {
+    icon: FaChartLine,
+    title: 'Analytics & Reports',
+    desc: 'Monthly revenue charts, payment breakdowns, and CSV export for all transactions.',
+    color: 'bg-purple-100 text-purple-600',
+  },
+  {
+    icon: FaUsers,
+    title: 'Customer Management',
+    desc: 'Customer profiles with loyalty points, purchase history, and contact details.',
+    color: 'bg-blue-100 text-blue-600',
+  },
+  {
+    icon: FaTruck,
+    title: 'Supplier Management',
+    desc: 'Manage suppliers, payment terms, and track total supplied value per vendor.',
+    color: 'bg-teal-100 text-teal-600',
+  },
+];
+
+const testimonials = [
+  {
+    name: 'Ramesh Shrestha',
+    role: 'Owner, Shrestha General Store, Kathmandu',
+    text: 'Hamropasal halved the time we spend on stock counting. The low-stock alerts alone saved us from two stockouts this quarter.',
+    rating: 5,
+  },
+  {
+    name: 'Sita Tamang',
+    role: 'Manager, Tamang Mart, Lalitpur',
+    text: 'The POS system is so fast. Our cashiers love it — eSewa and cash on one screen, receipt prints instantly.',
+    rating: 5,
+  },
+  {
+    name: 'Bikash Karki',
+    role: 'Owner, Karki Electronics, Bhaktapur',
+    text: "The reports module shows me exactly where my money is going. I can export everything to Excel with one click.",
+    rating: 5,
+  },
+];
+
+const benefits = [
+  'Real-time inventory updates across all devices',
+  'Role-based access for Admin and Cashier staff',
+  'Supports Cash, eSewa, and Banking payments',
+  'Low-stock alerts with configurable thresholds',
+  'CSV export for all reports and sales data',
+  'Fast, mobile-friendly POS interface',
+];
 
 export const Home = () => {
-  const stats = [
-    { icon: <FaBoxOpen className="text-2xl" />, label: "Total Products", value: "1,247", change: "+12%" },
-    { icon: <FaChartLine className="text-2xl" />, label: "Today's Sales", value: "$2,450", change: "+8%" },
-    { icon: <FaUsers className="text-2xl" />, label: "Active Customers", value: "892", change: "+5%" },
-    { icon: <FaTruckLoading className="text-2xl" />, label: "Pending Orders", value: "23", change: "-3%" }
-  ];
-
-  const recentActivities = [
-    {
-      id: 1,
-      title: "New order received",
-      description: "Order #ORD-7892 from Kathmandu Mall",
-      time: "2 min ago",
-      icon: <FaShoppingCart className="text-blue-500" />,
-      type: "order"
-    },
-    {
-      id: 2,
-      title: "Inventory updated",
-      description: "Stock levels updated for 15 products",
-      time: "15 min ago",
-      icon: <FaBox className="text-green-500" />,
-      type: "inventory"
-    },
-    {
-      id: 3,
-      title: "Low stock alert",
-      description: "Running low on rice stock (5kg bags)",
-      time: "1 hour ago",
-      icon: <FaExclamationTriangle className="text-orange-500" />,
-      type: "alert"
-    },
-    {
-      id: 4,
-      title: "New customer registered",
-      description: "Welcome to our store, Mr. Sharma!",
-      time: "2 hours ago",
-      icon: <FaUserPlus className="text-purple-500" />,
-      type: "customer"
-    }
-  ];
-
-  const quickStats = [
-    { label: "Total Revenue", value: "$124,500", icon: <FaDollarSign className="text-green-500" /> },
-    { label: "Profit Margin", value: "23.5%", icon: <FaChartLine className="text-blue-500" /> },
-    { label: "Inventory Value", value: "$89,200", icon: <FaBox className="text-purple-500" /> },
-    { label: "Average Order", value: "$45.20", icon: <FaShoppingCart className="text-orange-500" /> }
-  ];
+  const { isAuthenticated } = useAuth();
 
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <section className="bg-white">
-        <div className="container-custom py-16">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-            {/* Welcome Banner */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-4">
-                Welcome to Hamropasal
-              </h1>
-              <p className="text-gray-600 mb-6">
-                Streamline your retail operations with our comprehensive management system designed specifically for Nepali businesses.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                  Get Started
-                </Link>
-                <Link to="/demo" className="border border-gray-300 hover:border-gray-400 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
-                  Request Demo
-                </Link>
-              </div>
+    <div className="min-h-screen">
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm mb-6 backdrop-blur-sm">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              Built for Nepali businesses
             </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-6">
+              Run your shop smarter with{' '}
+              <span className="text-indigo-200">Hamropasal</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-indigo-100 mb-10 max-w-2xl mx-auto leading-relaxed">
+              All-in-one retail management — inventory, sales POS, customer tracking, supplier management, and analytics. Built for the way Nepali businesses work.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {isAuthenticated ? (
+                <Link to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-indigo-50 transition-colors text-base">
+                  Go to Dashboard <FaArrowRight />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register"
+                    className="inline-flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-indigo-50 transition-colors text-base">
+                    Get started free <FaArrowRight />
+                  </Link>
+                  <Link to="/login"
+                    className="inline-flex items-center justify-center px-8 py-3.5 border border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-base backdrop-blur-sm">
+                    Sign in
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* Wave */}
+        <div className="h-12 bg-gray-50" style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 1200 60\'%3E%3Cpath d=\'M0,30 C300,60 900,0 1200,30 L1200,60 L0,60 Z\' fill=\'%23f9fafb\'/%3E%3C/svg%3E")',
+          backgroundSize: '100% 100%',
+          marginTop: '-1px',
+        }} />
+      </section>
 
-            {/* Stats Cards */}
-            <div className="space-y-4">
-              {stats.map((stat, index) => (
-                <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="p-3 rounded-full bg-blue-50">
-                      {stat.icon}
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <span className={stat.change.startsWith('-') ? 'text-red-500' : 'text-green-500'}>
-                      {stat.change}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Benefits strip */}
+      <section className="bg-gray-50 py-6 border-b border-gray-200">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {benefits.map(b => (
+              <div key={b} className="flex items-start gap-2 text-sm text-gray-700">
+                <FaCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+                <span>{b}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-gray-50">
-        <div className="container-custom py-12">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Powerful Features for Your Business</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Experience comprehensive retail management with features designed to streamline every aspect of your business operations.
+      {/* Features */}
+      <section className="py-20 bg-white">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Everything your store needs</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">
+              Six powerful modules that work together to give you full visibility and control over your retail business.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-blue-50">
-                  <FaBoxOpen className="text-2xl text-blue-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map(f => (
+              <div key={f.title} className="bg-gray-50 rounded-2xl p-6 hover:shadow-md transition-shadow border border-gray-100">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${f.color}`}>
+                  <f.icon className="text-xl" />
                 </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Inventory Management</h3>
-                  <p className="text-gray-600 mt-2">
-                    Track stock levels in real-time, set automatic reorder points, and manage multiple warehouses effortlessly.
-                  </p>
-                </div>
+                <h3 className="font-semibold text-gray-900 text-lg mb-2">{f.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-green-50">
-                  <FaChartLine className="text-2xl text-green-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Sales & POS</h3>
-                  <p className="text-gray-600 mt-2">
-                    Process sales quickly with our intuitive point-of-sale system, supporting multiple payment methods and receipt printing.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-purple-50">
-                  <FaUsers className="text-2xl text-purple-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Customer Management</h3>
-                  <p className="text-gray-600 mt-2">
-                    Build lasting customer relationships with detailed profiles, purchase history, and loyalty programs.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-orange-50">
-                  <FaTruckLoading className="text-2xl text-orange-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Supplier Management</h3>
-                  <p className="text-gray-600 mt-2">
-                    Manage supplier relationships, track purchase orders, and optimize your supply chain operations.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-red-50">
-                  <FaChartBar className="text-2xl text-red-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Reports & Analytics</h3>
-                  <p className="text-gray-600 mt-2">
-                    Gain valuable insights with customizable reports, sales trends, and performance dashboards.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow transform hover:-translate-y-1">
-              <div className="flex items-start mb-4">
-                <div className="p-3 rounded-full bg-indigo-50">
-                  <FaShieldAlt className="text-2xl text-indigo-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xl font-semibold text-gray-800">Security & Compliance</h3>
-                  <p className="text-gray-600 mt-2">
-                    Bank-level security with role-based access control, audit trails, and regular data backups.
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="bg-white">
-        <div className="container-custom py-12">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">What Our Customers Say</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Hear from successful retailers who have transformed their businesses with Hamropasal.
-            </p>
+      {/* Testimonials */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Trusted by Nepali retailers</h2>
+            <p className="text-gray-500 text-lg">Real feedback from shop owners and managers using Hamropasal daily.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <div className="flex items-center mb-4">
-                <FaQuoteLeft className="text-2xl text-blue-500" />
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "Hamropasal has revolutionized how we manage our grocery store. Inventory tracking is now effortless and our sales have increased by 30% since implementation."
-              </p>
-              <div className="flex items-center mt-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-3">
-                  <FaUserCircle className="text-blue-500" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map(t => (
+              <div key={t.name} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                <FaQuoteLeft className="text-indigo-200 text-3xl mb-4" />
+                <p className="text-gray-700 leading-relaxed mb-5 text-sm">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm">
+                    {t.name[0]}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                    <p className="text-xs text-gray-500">{t.role}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800">Sanjay Sharma</h4>
-                  <p className="text-sm text-gray-500">Owner, Kathmandu Grocers</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <div className="flex items-center mb-4">
-                <FaQuoteLeft className="text-2xl text-blue-500" />
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "The POS system is incredibly fast and reliable. Our checkout times have reduced by half, leading to happier customers and increased sales."
-              </p>
-              <div className="flex items-center mt-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-3">
-                  <FaUserCircle className="text-blue-500" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800">Priya Patel</h4>
-                  <p className="text-sm text-gray-500">Manager, Patan Fashion Boutique</p>
+                <div className="flex gap-0.5 mt-4">
+                  {Array.from({ length: t.rating }).map((_, i) => (
+                    <FaStar key={i} className="text-amber-400 text-sm" />
+                  ))}
                 </div>
               </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <div className="flex items-center mb-4">
-                <FaQuoteLeft className="text-2xl text-blue-500" />
-              </div>
-              <p className="text-gray-600 italic mb-4">
-                "Real-time inventory alerts have prevented countless stockouts. We can now focus on growing our business instead of worrying about stock levels."
-              </p>
-              <div className="flex items-center mt-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-3">
-                  <FaUserCircle className="text-blue-500" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800">Ramesh Thapa</h4>
-                  <p className="text-sm text-gray-500">Owner, Biratnagar Electronics</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="container-custom py-16 text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Ready to Transform Your Retail Business?
+      {/* CTA */}
+      <section className="py-20 bg-indigo-600">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Ready to modernise your store?
           </h2>
-          <p className="text-white/90 mb-8 max-w-2xl mx-auto">
-            Join hundreds of successful retailers who have streamlined their operations with Hamropasal. Start your free trial today.
+          <p className="text-indigo-100 text-lg mb-8 max-w-xl mx-auto">
+            Join Hamropasal today. Free to try — no credit card required.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/register" className="bg-white hover:bg-gray-50 text-blue-600 hover:text-blue-700 px-8 py-4 rounded-lg font-semibold transition-colors">
-              Start Free Trial
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/register"
+              className="inline-flex items-center justify-center gap-2 bg-white text-indigo-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-indigo-50 transition-colors text-base">
+              Create free account <FaArrowRight />
             </Link>
-            <Link to="/demo" className="border border-white/20 hover:border-white/30 text-white hover:text-white/90 px-8 py-4 rounded-lg font-semibold transition-colors">
-              Request Demo
+            <Link to="/login"
+              className="inline-flex items-center justify-center px-8 py-3.5 border border-white/40 text-white font-semibold rounded-xl hover:bg-white/10 transition-colors text-base">
+              Sign in
             </Link>
           </div>
+          <p className="text-indigo-200 text-sm mt-6">
+            Demo credentials: <code className="bg-white/10 px-2 py-0.5 rounded text-white">admin@hamropasal.com</code> / <code className="bg-white/10 px-2 py-0.5 rounded text-white">admin123</code>
+          </p>
         </div>
       </section>
     </div>
