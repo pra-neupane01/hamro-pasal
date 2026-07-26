@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   FaChartLine,
   FaBoxOpen,
   FaUsers,
   FaTruckLoading,
   FaChartBar,
-  faTags,
-  faMoneyCheckDollar,
-  faUserFriends,
-  faShippingFast
+  FaTags,
+  FaMoneyBillWave as FaMoneyCheckDollar,
+  FaUserFriends,
+  FaShippingFast,
+  FaCalendarAlt
 } from 'react-icons/fa';
-import { FaCalendarAlt, FaClipboardList } from 'react-icons/fa6';
+import { FaClipboardList } from 'react-icons/fa6';
 
 export const Dashboard = () => {
-  const [stats, setStats] = useState([]);
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [lowStockItems, setLowStockItems] = useState([]);
-  const [salesChartData, setSalesChartData] = useState([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+  const [salesChartData, setSalesChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -184,7 +186,7 @@ export const Dashboard = () => {
                     <p className="text-sm text-gray-500">{order.customer}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={getStatusClass(order.status)} className="px-2 py-1 text-xs rounded-full">
+                    <span className={`${getStatusClass(order.status)} px-2 py-1 text-xs rounded-full`}>
                       {order.status}
                     </span>
                     <span className="text-sm font-medium">${order.total.toFixed(2)}</span>
@@ -272,7 +274,7 @@ export const Dashboard = () => {
 };
 
 // Helper function to get status class
-const getStatusClass = (status) => {
+const getStatusClass = (status: string) => {
   switch (status.toLowerCase()) {
     case 'delivered':
       return 'bg-green-100 text-green-800';

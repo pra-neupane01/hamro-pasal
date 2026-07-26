@@ -4,23 +4,27 @@ import {
   FaCalendarAlt,
   FaFileInvoice,
   FaUser,
-  FaMoneyCheckDollar,
-  faFilter,
-  faSearch
+  FaFilter,
+  FaSearch,
+  FaPlus,
+  FaEye,
+  FaPrint
 } from 'react-icons/fa';
-import { FaCalendarCheck, FileInvoiceDollar } from 'react-icons/fa6';
+import { FaCalendarCheck, FaFileInvoiceDollar } from 'react-icons/fa6';
+
+interface Sale {
+  id: string;
+  date: string;
+  customer: string;
+  items: number;
+  total: number;
+  payment: string;
+  status: string;
+  method: string;
+}
 
 export const Sales = () => {
-  const [sales, setSales] = useState([]);
-  const [dateRange, setDateRange] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('');
-  const [orderStatus, setOrderStatus] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date-desc');
-  const [loading, setLoading] = useState(false);
-
-  // Mock sales data
-  const mockSales = [
+  const mockSales: Sale[] = [
     {
       id: 'ORD-7892',
       date: '2024-01-15',
@@ -93,40 +97,27 @@ export const Sales = () => {
     }
   ];
 
-  // Initialize sales data
-  // useEffect(() => {
-  //   fetchSales();
-  // }, []);
-
-  // const fetchSales = async () => {
-  //   setLoading(true);
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 800));
-  //     setSales(mockSales);
-  //   } catch (error) {
-  //     console.error('Error fetching sales:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // For now, we'll set sales directly
-  // setSales(mockSales);
+  const [sales, setSales] = useState<Sale[]>(mockSales);
+  const [dateRange, setDateRange] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [orderStatus, setOrderStatus] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date-desc');
+  const [loading, setLoading] = useState(false);
 
   // Filter and sort sales
   const filteredSales = sales
     .filter(sale => {
       const matchesSearch = sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            sale.customer.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDate = !dateRange || sale.date >= dateRange.split(' to ')[0] && sale.date <= dateRange.split(' to ')[1];
+      const matchesDate = !dateRange || (sale.date >= dateRange.split(' to ')[0] && sale.date <= dateRange.split(' to ')[1]);
       const matchesPayment = !paymentStatus || sale.payment === paymentStatus;
       const matchesStatus = !orderStatus || sale.status === orderStatus;
       return matchesSearch && matchesDate && matchesPayment && matchesStatus;
     })
     .sort((a, b) => {
-      if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
-      if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
+      if (sortBy === 'date-asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (sortBy === 'date-desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
       if (sortBy === 'amount-asc') return a.total - b.total;
       if (sortBy === 'amount-desc') return b.total - a.total;
       return 0;
@@ -411,12 +402,12 @@ export const Sales = () => {
                       <div className="text-sm font-medium text-gray-900">$ {sale.total.toFixed(2)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getPaymentStatusClass(sale.payment)} className="px-3 py-1 text-xs rounded-full">
+                      <span className={`${getPaymentStatusClass(sale.payment)} px-3 py-1 text-xs rounded-full`}>
                         {getPaymentStatusLabel(sale.payment)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getOrderStatusClass(sale.status)} className="px-3 py-1 text-xs rounded-full">
+                      <span className={`${getOrderStatusClass(sale.status)} px-3 py-1 text-xs rounded-full`}>
                         {getOrderStatusLabel(sale.status)}
                       </span>
                     </td>
@@ -440,7 +431,7 @@ export const Sales = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     No sales found matching your criteria.
                   </td>
                 </tr>
@@ -478,7 +469,7 @@ export const Sales = () => {
 };
 
 // Helper functions for status classes and labels
-const getPaymentStatusClass = (status) => {
+const getPaymentStatusClass = (status: string) => {
   switch (status) {
     case 'completed':
       return 'bg-green-100 text-green-800';
@@ -493,7 +484,7 @@ const getPaymentStatusClass = (status) => {
   }
 };
 
-const getPaymentStatusLabel = (status) => {
+const getPaymentStatusLabel = (status: string) => {
   switch (status) {
     case 'completed':
       return 'Paid';
@@ -508,7 +499,7 @@ const getPaymentStatusLabel = (status) => {
   }
 };
 
-const getOrderStatusClass = (status) => {
+const getOrderStatusClass = (status: string) => {
   switch (status) {
     case 'pending':
       return 'bg-yellow-100 text-yellow-800';
@@ -527,7 +518,7 @@ const getOrderStatusClass = (status) => {
   }
 };
 
-const getOrderStatusLabel = (status) => {
+const getOrderStatusLabel = (status: string) => {
   switch (status) {
     case 'pending':
       return 'Pending';

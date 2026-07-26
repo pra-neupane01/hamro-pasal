@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import {
   FaChartBar,
-  faChartLine,
-  faChartPie,
-  faCalendarAlt,
-  faFileAlt,
-  faPrint,
-  faFileExport
+  FaChartLine,
+  FaChartPie,
+  FaCalendarAlt,
+  FaFileAlt,
+  FaPrint,
+  FaFileExport
 } from 'react-icons/fa';
 import { FaFileInvoiceDollar } from 'react-icons/fa6';
 
 export const Reports = () => {
   const [dateRange, setDateRange] = useState('');
   const [reportType, setReportType] = useState('sales');
-  const [reportData, setReportData] = useState(null);
+  const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // Mock report data

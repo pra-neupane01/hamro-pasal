@@ -4,24 +4,29 @@ import {
   FaTruckLoading,
   FaSyncAlt,
   FaSearch,
-  faPlus,
-  faTrash,
-  faEdit
+  FaPlus,
+  FaTrash,
+  FaEdit,
+  FaCheckCircle,
+  FaTimesCircle
 } from 'react-icons/fa';
-import { FaCheckCircle, faTimesCircle } from 'react-icons/fa6';
+
+interface InventoryItem {
+  id: number;
+  name: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  minStock: number;
+  price: number;
+  supplier: string;
+  location: string;
+  status: string;
+}
 
 export const Inventory = () => {
-  const [inventory, setInventory] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Mock inventory data
-  const mockInventory = [
+  const mockInventory: InventoryItem[] = [
     {
       id: 1,
       name: 'Basmati Rice (5kg)',
@@ -47,47 +52,16 @@ export const Inventory = () => {
       supplier: 'Beverage Co.',
       location: 'Cooler Section',
       status: 'good'
-    },
-    {
-      id: 3,
-      name: 'Toothpaste Colgate',
-      sku: 'HEALTH-012',
-      category: 'Personal Care',
-      quantity: 15,
-      unit: 'tubes',
-      minStock: 5,
-      price: 120.00,
-      supplier: 'Health Products Ltd.',
-      location: 'Aisle 5, Shelf 2',
-      status: 'good'
-    },
-    {
-      id: 4,
-      name: 'White Bread Loaf',
-      sku: 'BAKERY-003',
-      category: 'Bakery',
-      quantity: 7,
-      unit: 'loaves',
-      minStock: 12,
-      price: 40.00,
-      supplier: 'Fresh Bakery Inc.',
-      location: 'Bakery Section',
-      status: 'low-stock'
-    },
-    {
-      id: 5,
-      name: 'Chicken Masala',
-      sku: 'SPICE-008',
-      category: 'Spices',
-      quantity: 4,
-      unit: 'packets',
-      minStock: 10,
-      price: 80.00,
-      supplier: 'Spice World',
-      location: 'Aisle 3, Shelf 1',
-      status: 'low-stock'
     }
   ];
+
+  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Initialize inventory data
   // useEffect(() => {
@@ -131,17 +105,21 @@ export const Inventory = () => {
       return 0;
     });
 
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+
   // Handle delete confirmation
-  const handleDelete = (item) => {
+  const handleDelete = (item: InventoryItem) => {
     setItemToDelete(item);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = () => {
+    if (!itemToDelete) return;
     // In a real app, this would call an API to delete the item
     setInventory(inventory.filter(i => i.id !== itemToDelete.id));
     setShowDeleteModal(false);
     alert(`${itemToDelete.name} has been removed from inventory!`);
+    setItemToDelete(null);
   };
 
   const cancelDelete = () => {
@@ -368,7 +346,7 @@ export const Inventory = () => {
                       <div className="text-sm text-gray-900">{item.location}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getInventoryStatusBadgeClass(item.status)} className="px-3 py-1 text-xs rounded-full">
+                      <span className={`${getInventoryStatusBadgeClass(item.status)} px-3 py-1 text-xs rounded-full`}>
                         {getInventoryStatusLabel(item.status)}
                       </span>
                     </td>
@@ -392,7 +370,7 @@ export const Inventory = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="11" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={11} className="px-6 py-8 text-center text-gray-500">
                     No inventory items found matching your criteria.
                   </td>
                 </tr>
@@ -432,7 +410,7 @@ export const Inventory = () => {
           <div className="bg-white rounded-xl p-8 w-96 max-w-md">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Delete Item</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete "{itemToDelete.name}"? This action cannot be undone.
+              Are you sure you want to delete "{itemToDelete?.name}"? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -456,7 +434,7 @@ export const Inventory = () => {
 };
 
 // Helper function to get inventory status badge class
-const getInventoryStatusBadgeClass = (status) => {
+const getInventoryStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'good':
       return 'bg-green-100 text-green-800';
@@ -472,7 +450,7 @@ const getInventoryStatusBadgeClass = (status) => {
 };
 
 // Helper function to get inventory status label
-const getInventoryStatusLabel = (status) => {
+const getInventoryStatusLabel = (status: string) => {
   switch (status) {
     case 'good':
       return 'Good';

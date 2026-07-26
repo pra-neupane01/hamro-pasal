@@ -1,4 +1,5 @@
-import { FaHistory, FaUsers, FaBuilding, FaLeaf, FaShieldAlt, FaChartLine } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { FaHistory, FaUsers, FaBuilding, FaLeaf, FaShieldAlt, FaChartLine, FaUserCircle, FaLinkedinIn } from 'react-icons/fa';
 
 export const About = () => {
   return (

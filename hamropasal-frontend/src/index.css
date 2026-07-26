@@ -1,20 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Custom styles */
-:root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --secondary: #64748b;
-  --success: #10b981;
-  --warning: #f59e0b;
-  /* --error: #ef4444; */
-  --background: #ffffff;
-  --surface: #f8fafc;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-secondary: #64748b;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-error: #ef4444;
 }
 
 body {
@@ -46,79 +43,79 @@ body {
 }
 
 .card {
-  @applying bg-white rounded-xl shadow-sm border border-border overflow-hidden;
+  @apply bg-white rounded-xl shadow-sm border border-border overflow-hidden;
 }
 
 .card-header {
-  @applying px-6 py-5 border-b border-border;
+  @apply px-6 py-5 border-b border-border;
 }
 
 .card-body {
-  @applying px-6 py-6;
+  @apply px-6 py-6;
 }
 
 .card-footer {
-  @applying px-6 py-4 border-t border-border;
+  @apply px-6 py-4 border-t border-border;
 }
 
 .badge {
-  @applying inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
 }
 
 .badge-primary {
-  @applying bg-primary/10 text-primary;
+  @apply bg-primary/10 text-primary;
 }
 
 .badge-success {
-  @applying bg-success/10 text-success;
+  @apply bg-success/10 text-success;
 }
 
 .badge-warning {
-  @applying bg-warning/10 text-warning;
+  @apply bg-warning/10 text-warning;
 }
 
 .badge-error {
-  @applying bg-error/10 text-error;
+  @apply bg-error/10 text-error;
 }
 
 .table-responsive {
-  @applying overflow-x-auto;
+  @apply overflow-x-auto;
 }
 
 table {
-  @applying w-full border-collapse;
+  @apply w-full border-collapse;
 }
 
 th, td {
-  @applying px-6 py-4 text-left border-b border-border;
+  @apply px-6 py-4 text-left border-b border-border;
 }
 
 th {
-  @applying font-medium text-text-secondary/80 uppercase text-xs tracking-wider;
+  @apply font-medium text-text-secondary/80 uppercase text-xs tracking-wider;
 }
 
 tr:hover {
-  @applying bg-gray-50;
+  @apply bg-gray-50;
 }
 
 .alert {
-  @applying px-4 py-3 rounded-lg border border-t-4 mb-4;
+  @apply px-4 py-3 rounded-lg border border-t-4 mb-4;
 }
 
 .alert-info {
-  @applying bg-blue-50 border-blue-200 border-t-blue-500 text-blue-800;
+  @apply bg-blue-50 border-blue-200 border-t-blue-500 text-blue-800;
 }
 
 .alert-success {
-  @applying bg-green-50 border-green-200 border-t-green-500 text-green-800;
+  @apply bg-green-50 border-green-200 border-t-green-500 text-green-800;
 }
 
 .alert-warning {
-  @applying bg-yellow-50 border-yellow-200 border-t-yellow-500 text-yellow-800;
+  @apply bg-yellow-50 border-yellow-200 border-t-yellow-500 text-yellow-800;
 }
 
 .alert-error {
-  @applying bg-red-50 border-red-200 border-t-red-500 text-red-800;
+  @apply bg-red-50 border-red-200 border-t-red-500 text-red-800;
 }
 
 /* Skeleton loader */

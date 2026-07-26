@@ -4,24 +4,27 @@ import {
   FaTrash,
   FaEdit,
   FaFilter,
-  faSearch,
-  faSort,
-  faEllipsisV
+  FaSearch,
+  FaSort,
+  FaEllipsisV
 } from 'react-icons/fa';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa6';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  category: string;
+  price: number;
+  stock: number;
+  minStock: number;
+  status: string;
+  image: string;
+  unit?: string;
+}
 
 export const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Mock product data
-  const mockProducts = [
+  const mockProducts: Product[] = [
     {
       id: 1,
       name: 'Basmati Rice (5kg)',
@@ -38,46 +41,22 @@ export const Products = () => {
       name: 'Coca-Cola 500ml',
       sku: 'DRINK-005',
       category: 'Beverages',
-      price: 25.00,
-      stock: 100,
+      price: 50.00,
+      stock: 120,
       minStock: 20,
       status: 'active',
-      image: 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cdb?w=100&h=100&fit=crop'
-    },
-    {
-      id: 3,
-      name: 'Toothpaste Colgate',
-      sku: 'HEALTH-012',
-      category: 'Personal Care',
-      price: 120.00,
-      stock: 15,
-      minStock: 5,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop'
-    },
-    {
-      id: 4,
-      name: 'White Bread Loaf',
-      sku: 'BAKERY-003',
-      category: 'Bakery',
-      price: 40.00,
-      stock: 50,
-      minStock: 15,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1551307753-2f6e5g6?w=100&h=100&fit=crop'
-    },
-    {
-      id: 5,
-      name: 'Chicken Masala',
-      sku: 'SPICE-008',
-      category: 'Spices',
-      price: 80.00,
-      stock: 5,
-      minStock: 10,
-      status: 'low-stock',
-      image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=100&h=100&fit=crop'
+      image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&h=100&fit=crop'
     }
   ];
+
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // Initialize products on mount
   // In a real app, this would be fetched from an API
@@ -128,17 +107,19 @@ export const Products = () => {
     });
 
   // Handle delete confirmation
-  const handleDelete = (product) => {
+  const handleDelete = (product: Product) => {
     setProductToDelete(product);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = () => {
+    if (!productToDelete) return;
     // In a real app, this would call an API to delete the product
     setProducts(products.filter(p => p.id !== productToDelete.id));
     setShowDeleteModal(false);
     // Show success message
     alert(`${productToDelete.name} has been deleted successfully!`);
+    setProductToDelete(null);
   };
 
   const cancelDelete = () => {
@@ -338,15 +319,16 @@ export const Products = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 flex items-center justify-center rounded-full
-                           {product.stock <= product.minStock ? 'bg-red-100' : 'bg-green-100'}>
+                        <div className={`w-8 h-8 flex items-center justify-center rounded-full ${
+                          product.stock <= product.minStock ? 'bg-red-100' : 'bg-green-100'
+                        }`}>
                           {product.stock}
                         </div>
                         <span className="text-sm text-gray-600">{product.stock} {product.unit || 'pcs'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadgeClass(product.status)} className="px-3 py-1 text-xs rounded-full">
+                      <span className={`${getStatusBadgeClass(product.status)} px-3 py-1 text-xs rounded-full`}>
                         {getStatusLabel(product.status)}
                       </span>
                     </td>
@@ -368,9 +350,9 @@ export const Products = () => {
                     </td>
                   </tr>
                 ))
-              )) : (
+              ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     No products found matching your criteria.
                   </td>
                 </tr>
@@ -408,7 +390,7 @@ export const Products = () => {
 };
 
 // Helper function to get status badge class
-const getStatusBadgeClass = (status) => {
+const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'active':
       return 'bg-green-100 text-green-800';
@@ -424,7 +406,7 @@ const getStatusBadgeClass = (status) => {
 };
 
 // Helper function to get status label
-const getStatusLabel = (status) => {
+const getStatusLabel = (status: string) => {
   switch (status) {
     case 'active':
       return 'Active';

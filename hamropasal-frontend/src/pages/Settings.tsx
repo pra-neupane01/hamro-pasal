@@ -10,11 +10,25 @@ import {
   FaTruckLoading,
   FaChartLine,
   FaUserShield,
-  FaRegCalendarAlt,
-  faBullhorn,
-  faUsersCog
+  FaBullhorn,
+  FaUsersCog,
+  FaPlug,
+  FaSave,
+  FaRedoAlt,
+  FaUser,
+  FaCreditCard,
+  FaWallet,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaCalculator,
+  FaUserCircle,
+  FaCalendarAlt,
+  FaBuilding,
+  FaMapMarkerAlt,
+  FaBoxOpen,
+  FaUsers,
+  FaTrash
 } from 'react-icons/fa';
-import { FaRegBell as FarBell, faRegCalendarAlt } from 'react-icons/fa6';
 
 export const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');

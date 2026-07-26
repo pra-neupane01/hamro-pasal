@@ -1,3 +1,16 @@
+import { Link } from 'react-router-dom';
+import {
+  FaFacebookF,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedinIn,
+  FaCheckCircle,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaClock
+} from 'react-icons/fa';
+
 export const Footer = () => {
   return (
     <footer className="bg-gray-800 text-gray-200 border-t border-gray-700">
@@ -56,26 +69,26 @@ export const Footer = () => {
             <h3 className="text-white font-bold mb-4">Features</h3>
             <ul className="space-y-2">
               <li className="flex items-center text-gray-300">
-                <FaCheckCircle text-green-1 text-400>
-                Inventory Management
+                <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                <span>Inventory Management</span>
               </li>
-              <li className="flex items-center text-gray-">
+              <li className="flex items-center text-gray-300">
                 <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
                 <span>Sales & POS</span>
               </li>
-              <li className="flex items-center text-gray-">
+              <li className="flex items-center text-gray-300">
                 <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
                 <span>Customer Management</span>
               </li>
-              <li className="flex items-center text-gray-">
+              <li className="flex items-center text-gray-300">
                 <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
                 <span>Supplier Management</span>
               </li>
-              <li className="flex items-center text-gray-">
+              <li className="flex items-center text-gray-300">
                 <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
                 <span>Reporting & Analytics</span>
               </li>
-              <li className="flex items-center text-gray-">
+              <li className="flex items-center text-gray-300">
                 <FaCheckCircle className="h-4 w-4 text-green-400 mr-2" />
                 <span>Multi-store Support</span>
               </li>

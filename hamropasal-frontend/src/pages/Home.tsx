@@ -1,6 +1,3 @@
-import { FaBoxOpen, FaChartLine, FaUsers, FaTruckLoading, FaShoppingCart, FaBox, FaDollarSign, FaExclamationTriangle, FaUserPlus, FaChartBar, FaShieldAlt, FaQuoteLeft, FaUserCircle } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-
 import { Link } from 'react-router-dom';
 import {
   FaBoxOpen,

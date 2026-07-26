@@ -12,7 +12,6 @@ import { Sales } from './pages/Sales';
 import { Inventory } from './pages/Inventory';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
-import './App.css';
 
 function App() {
   return (

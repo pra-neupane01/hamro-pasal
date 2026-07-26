@@ -1,5 +1,19 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaShoppingCart, FaUser, FaSearch, faBars } from 'react-icons/fa';
+import {
+  FaShoppingCart,
+  FaUser,
+  FaSearch,
+  FaBars,
+  FaChevronDown,
+  FaHome,
+  FaBoxOpen,
+  FaBoxes,
+  FaChartLine,
+  FaChartBar,
+  FaUsers,
+  FaTruckLoading
+} from 'react-icons/fa';
 import { AiOutlineProfile, AiFillSetting } from 'react-icons/ai';
 import { FaRegBell } from 'react-icons/fa6';
 
