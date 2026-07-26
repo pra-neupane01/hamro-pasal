@@ -61,9 +61,9 @@ export const Login = () => {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Demo credentials hint */}
+            {/* Sign in hint */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
-              <strong>Demo:</strong> admin@hamropasal.com / admin123
+              Use your registered email and password to sign in. Contact your admin if you don't have an account.
             </div>
 
             <div>

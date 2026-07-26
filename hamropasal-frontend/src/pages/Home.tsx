@@ -212,7 +212,8 @@ export const Home = () => {
             </Link>
           </div>
           <p className="text-indigo-200 text-sm mt-6">
-            Demo credentials: <code className="bg-white/10 px-2 py-0.5 rounded text-white">admin@hamropasal.com</code> / <code className="bg-white/10 px-2 py-0.5 rounded text-white">admin123</code>
+            Already have an account?{' '}
+            <Link to="/login" className="underline text-white hover:text-indigo-100">Sign in here</Link>
           </p>
         </div>
       </section>

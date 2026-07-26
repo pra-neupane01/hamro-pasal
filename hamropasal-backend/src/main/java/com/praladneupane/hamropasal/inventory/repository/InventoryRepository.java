@@ -15,6 +15,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Long countByQuantityInStockLessThanEqual(Integer threshold);
 
-    @Query("SELECT SUM(i.quantityInStock * p.price) FROM Inventory i JOIN Product p ON i.product.id = p.id")
+    @Query("SELECT SUM(i.quantityInStock * i.product.price) FROM Inventory i")
     Double getTotalInventoryValue();
 }

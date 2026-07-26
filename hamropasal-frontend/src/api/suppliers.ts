@@ -16,20 +16,20 @@ export interface Supplier {
 
 export const suppliersApi = {
   getAll: () =>
-    api.get<APIResponse<Supplier[]>>('/api/v1/suppliers'),
+    api.get<APIResponse<Supplier[]>>('/suppliers'),
 
   getById: (id: number) =>
-    api.get<APIResponse<Supplier>>(`/api/v1/suppliers/${id}`),
+    api.get<APIResponse<Supplier>>(`/suppliers/${id}`),
 
   create: (data: { companyName: string; contactPerson: string; email?: string; phone: string; address?: string; city?: string; paymentTerms?: string }) =>
-    api.post<APIResponse<Supplier>>('/api/v1/suppliers', data),
+    api.post<APIResponse<Supplier>>('/suppliers', data),
 
   update: (id: number, data: Partial<{ companyName: string; contactPerson: string; email: string; phone: string; address: string; city: string; paymentTerms: string; active: boolean }>) =>
-    api.put<APIResponse<Supplier>>(`/api/v1/suppliers/${id}`, data),
+    api.put<APIResponse<Supplier>>(`/suppliers/${id}`, data),
 
   delete: (id: number) =>
-    api.delete<APIResponse<void>>(`/api/v1/suppliers/${id}`),
+    api.delete<APIResponse<void>>(`/suppliers/${id}`),
 
   search: (query: string) =>
-    api.get<APIResponse<Supplier[]>>(`/api/v1/suppliers/search?query=${encodeURIComponent(query)}`),
+    api.get<APIResponse<Supplier[]>>(`/suppliers/search?query=${encodeURIComponent(query)}`),
 };
