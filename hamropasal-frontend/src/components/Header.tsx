@@ -1,149 +1,179 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  FaShoppingCart,
-  FaUser,
-  FaSearch,
-  FaBars,
-  FaChevronDown,
-  FaHome,
-  FaBoxOpen,
-  FaBoxes,
-  FaChartLine,
-  FaChartBar,
-  FaUsers,
-  FaTruckLoading
+  FaBars, FaTimes, FaHome, FaBoxOpen, FaBoxes,
+  FaChartLine, FaChartBar, FaUsers, FaTruck,
+  FaTachometerAlt, FaCog, FaSignOutAlt, FaUserCircle,
 } from 'react-icons/fa';
-import { AiOutlineProfile, AiFillSetting } from 'react-icons/ai';
 import { FaRegBell } from 'react-icons/fa6';
+import { useAuth } from '../context/AuthContext';
+
+const navItems = [
+  { to: '/dashboard', label: 'Dashboard', icon: FaTachometerAlt },
+  { to: '/products',  label: 'Products',  icon: FaBoxOpen },
+  { to: '/inventory', label: 'Inventory', icon: FaBoxes },
+  { to: '/sales',     label: 'Sales',     icon: FaChartLine },
+  { to: '/reports',   label: 'Reports',   icon: FaChartBar },
+  { to: '/customers', label: 'Customers', icon: FaUsers },
+  { to: '/suppliers', label: 'Suppliers', icon: FaTruck },
+];
 
 export const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
-  const [cartItems, setCartItems] = useState(2);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    navigate('/login');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+
+  // Public pages don't show the full app nav
+  const isPublicPage = ['/', '/about', '/contact', '/login', '/register'].includes(location.pathname);
 
   return (
-    <header className="bg-white border-b border-border shadow-sm">
-      <div className="container-custom flex h-16 items-center justify-between">
+    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+      <div className="max-w-screen-xl mx-auto px-4 flex h-16 items-center justify-between">
         {/* Logo */}
+        <Link to={isAuthenticated ? '/dashboard' : '/'} className="flex items-center space-x-2 flex-shrink-0">
+          <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">H</span>
+          </div>
+          <span className="font-bold text-lg text-gray-900">Hamropasal</span>
+        </Link>
+
+        {/* Desktop nav — only when authenticated and not on public pages */}
+        {isAuthenticated && !isPublicPage && (
+          <nav className="hidden lg:flex items-center space-x-1">
+            {navItems.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive(to)
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        {/* Right side */}
         <div className="flex items-center space-x-3">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-primary font-bold text-xl">H</span>
-            </div>
-            <span className="font-bold text-xl text-primary">Hamropasal</span>
-          </Link>
-        </div>
+          {isAuthenticated ? (
+            <>
+              {/* Notifications */}
+              <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg" aria-label="Notifications">
+                <FaRegBell className="text-lg" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
 
-        {/* Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Home</Link>
-          <Link to="/products" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Products</Link>
-          <Link to="/inventory" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Inventory</Link>
-          <Link to="/sales" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Sales</Link>
-          <Link to="/reports" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Reports</Link>
-          <Link to="/customers" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Customers</Link>
-          <Link to="/suppliers" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Suppliers</Link>
-        </div>
+              {/* User dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="User menu"
+                >
+                  <FaUserCircle className="text-xl text-indigo-600" />
+                  <span className="hidden md:block text-sm font-medium text-gray-700">
+                    {user?.fullName?.split(' ')[0]}
+                  </span>
+                  <span className={`hidden md:block text-xs px-1.5 py-0.5 rounded font-medium ${
+                    user?.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {user?.role}
+                  </span>
+                </button>
 
-        {/* User actions */}
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-all w-40 md:w-60 placeholder:text-text-secondary/60"
-            />
-          </div>
-
-          {/* Notifications */}
-          <div className="relative">
-            <FaRegBell className="text-xl text-secondary relative" />
-            {notifications > 0 && (
-              <span className="absolute -top-1 -right-1 flex w-5 h-5 items-center justify-center rounded-full bg-red-500 text-white text-xs">
-                {notifications}
-              </span>
-            )}
-          </div>
-
-          {/* Cart */}
-          <Link to="/cart" className="relative">
-            <FaShoppingCart className="text-xl text-secondary relative" />
-            {cartItems > 0 && (
-              <span className="absolute -top-1 -right-1 flex w-5 h-5 items-center justify-center rounded-full bg-primary text-white text-xs">
-                {cartItems}
-              </span>
-            )}
-          </Link>
-
-          {/* User menu */}
-          <div className="relative">
-            <button onClick={toggleMenu} className="flex items-center space-x-2 text-text-secondary hover:text-primary transition-colors">
-              <AiOutlineProfile className="h-5 w-5" />
-              <span className="hidden md:inline">Admin</span>
-              <FaChevronDown className="h-4 w-4" />
-            </button>
-
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-lg z-50">
-                <Link to="/profile" className="flex items-center px-4 py-3 border-b border-border hover:bg-gray-50">
-                  <AiFillSetting className="mr-3 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-                <a href="#" className="flex items-center px-4 py-3 border-b border-border hover:bg-gray-50 text-red-600">
-                  <FaRegBell className="mr-3 h-4 w-4 text-red-500" />
-                  <span>Logout</span>
-                </a>
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-900">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
+                    </div>
+                    <Link
+                      to="/settings"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <FaCog className="mr-3 text-gray-400" />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <FaSignOutAlt className="mr-3" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Mobile menu button */}
-        <button onClick={toggleMenu} className="md:hidden">
-          <FaBars className="text-xl text-secondary" />
-        </button>
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <FaTimes className="text-lg" /> : <FaBars className="text-lg" />}
+              </button>
+            </>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/login"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                Get started
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="bg-white border-t border-border">
-            <nav className="space-y-1">
-              <Link to="/" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaHome className="mr-3" />
-                Home
+      {mobileOpen && isAuthenticated && (
+        <div className="lg:hidden border-t border-gray-200 bg-white">
+          <nav className="px-4 py-2 space-y-1">
+            {navItems.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  isActive(to)
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="mr-3 text-base" />
+                {label}
               </Link>
-              <Link to="/products" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaBoxOpen className="mr-3" />
-                Products
-              </Link>
-              <Link to="/inventory" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaBoxes className="mr-3" />
-                Inventory
-              </Link>
-              <Link to="/sales" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaChartLine className="mr-3" />
-                Sales
-              </Link>
-              <Link to="/reports" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaChartBar className="mr-3" />
-                Reports
-              </Link>
-              <Link to="/customers" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaUsers className="mr-3" />
-                Customers
-              </Link>
-              <Link to="/suppliers" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaTruckLoading className="mr-3" />
-                Suppliers
-              </Link>
-            </nav>
-          </div>
+            ))}
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+            >
+              <FaSignOutAlt className="mr-3" />
+              Sign out
+            </button>
+          </nav>
         </div>
       )}
     </header>

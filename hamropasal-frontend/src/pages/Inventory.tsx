@@ -1,466 +1,310 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  FaBox,
-  FaTruckLoading,
-  FaSyncAlt,
-  FaSearch,
-  FaPlus,
-  FaTrash,
-  FaEdit,
-  FaCheckCircle,
-  FaTimesCircle
+  FaSearch, FaTimes, FaExclamationTriangle, FaBoxes,
+  FaArrowUp, FaCog, FaSyncAlt,
 } from 'react-icons/fa';
+import { inventoryApi, type InventoryItem } from '../api/inventory';
 
-interface InventoryItem {
-  id: number;
-  name: string;
-  sku: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  minStock: number;
-  price: number;
-  supplier: string;
-  location: string;
-  status: string;
-}
-
-export const Inventory = () => {
-  const mockInventory: InventoryItem[] = [
-    {
-      id: 1,
-      name: 'Basmati Rice (5kg)',
-      sku: 'RICE-001',
-      category: 'Groceries',
-      quantity: 25,
-      unit: 'kg',
-      minStock: 10,
-      price: 450.00,
-      supplier: 'ABC Rice Suppliers',
-      location: 'Aisle 1, Shelf 3',
-      status: 'good'
-    },
-    {
-      id: 2,
-      name: 'Coca-Cola 500ml',
-      sku: 'DRINK-005',
-      category: 'Beverages',
-      quantity: 100,
-      unit: 'bottles',
-      minStock: 20,
-      price: 25.00,
-      supplier: 'Beverage Co.',
-      location: 'Cooler Section',
-      status: 'good'
-    }
-  ];
-
-  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+// ── Restock Modal ─────────────────────────────────────────────────────────────
+function RestockModal({ item, onClose, onDone }: {
+  item: InventoryItem; onClose: () => void; onDone: () => void;
+}) {
+  const [qty, setQty] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Initialize inventory data
-  // useEffect(() => {
-  //   fetchInventory();
-  // }, []);
-
-  // const fetchInventory = async () => {
-  //   setLoading(true);
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 800));
-  //     setInventory(mockInventory);
-  //   } catch (error) {
-  //     console.error('Error fetching inventory:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // For now, we'll set inventory directly
-  // useEffect(() => {
-  //   setInventory(mockInventory);
-  // }, []);
-
-  // Filter and sort inventory
-  const filteredInventory = inventory
-    .filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !selectedCategory || item.category === selectedCategory;
-      const matchesStatus = !selectedStatus || item.status === selectedStatus;
-      return matchesSearch && matchesCategory && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
-      if (sortBy === 'quantity-asc') return a.quantity - b.quantity;
-      if (sortBy === 'quantity-desc') return b.quantity - a.quantity;
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      return 0;
-    });
-
-  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
-
-  // Handle delete confirmation
-  const handleDelete = (item: InventoryItem) => {
-    setItemToDelete(item);
-    setShowDeleteModal(true);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = parseInt(qty);
+    if (!n || n < 1) { setError('Enter a valid quantity (min 1)'); return; }
+    setLoading(true);
+    try {
+      await inventoryApi.restock(item.productId, n);
+      onDone();
+    } catch (err: any) {
+      setError(err.message ?? 'Restock failed');
+      setLoading(false);
+    }
   };
-
-  const confirmDelete = () => {
-    if (!itemToDelete) return;
-    // In a real app, this would call an API to delete the item
-    setInventory(inventory.filter(i => i.id !== itemToDelete.id));
-    setShowDeleteModal(false);
-    alert(`${itemToDelete.name} has been removed from inventory!`);
-    setItemToDelete(null);
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setItemToDelete(null);
-  };
-
-  // Categories for filter
-  const categories = [...new Set(inventory.map(i => i.category))];
-
-  // Status options
-  const statusOptions = [
-    { value: 'good', label: 'Good' },
-    { value: 'low-stock', label: 'Low Stock' },
-    { value: 'out-of-stock', label: 'Out of Stock' },
-    { value: 'damaged', label: 'Damaged' }
-  ];
-
-  // Sort options
-  const sortOptions = [
-    { value: 'name-asc', label: 'Name: A to Z' },
-    { value: 'name-desc', label: 'Name: Z to A' },
-    { value: 'quantity-asc', label: 'Quantity: Low to High' },
-    { value: 'quantity-desc', label: 'Quantity: High to Low' },
-    { value: 'price-asc', label: 'Price: Low to High' },
-    { value: 'price-desc', label: 'Price: High to Low' }
-  ];
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {/* Loading state */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Inventory</h2>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-              <FaPlus /> Add Item
-            </button>
-          </div>
-          <div className="h-96 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <span className="ml-2 text-gray-500">Loading inventory...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+        <h3 className="font-semibold text-gray-900 mb-1">Restock — {item.productName}</h3>
+        <p className="text-sm text-gray-500 mb-4">Current stock: <strong>{item.quantityInStock}</strong></p>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity to add</label>
+            <input
+              type="number" min="1" value={qty} onChange={e => setQty(e.target.value)} required autoFocus
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Enter quantity"
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+            <button type="submit" disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50">
+              {loading ? 'Restocking…' : 'Restock'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Threshold Modal ───────────────────────────────────────────────────────────
+function ThresholdModal({ item, onClose, onDone }: {
+  item: InventoryItem; onClose: () => void; onDone: () => void;
+}) {
+  const [threshold, setThreshold] = useState(item.lowStockThreshold.toString());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = parseInt(threshold);
+    if (isNaN(n) || n < 0) { setError('Enter a valid threshold (min 0)'); return; }
+    setLoading(true);
+    try {
+      await inventoryApi.updateThreshold(item.productId, n);
+      onDone();
+    } catch (err: any) {
+      setError(err.message ?? 'Update failed');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+        <h3 className="font-semibold text-gray-900 mb-1">Set Reorder Threshold — {item.productName}</h3>
+        <p className="text-sm text-gray-500 mb-4">Current threshold: <strong>{item.lowStockThreshold}</strong></p>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New threshold</label>
+            <input
+              type="number" min="0" value={threshold} onChange={e => setThreshold(e.target.value)} required autoFocus
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">Cancel</button>
+            <button type="submit" disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50">
+              {loading ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Inventory page ───────────────────────────────────────────────────────
+export const Inventory = () => {
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [filtered, setFiltered] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'low' | 'ok'>('all');
+  const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
+  const [thresholdItem, setThresholdItem] = useState<InventoryItem | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await inventoryApi.getAll();
+      setItems(res.data);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to load inventory');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    let list = [...items];
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(i =>
+        i.productName.toLowerCase().includes(q) ||
+        i.sku.toLowerCase().includes(q) ||
+        (i.categoryName ?? '').toLowerCase().includes(q)
+      );
+    }
+    if (statusFilter === 'low') list = list.filter(i => i.lowStock);
+    if (statusFilter === 'ok') list = list.filter(i => !i.lowStock);
+    setFiltered(list);
+  }, [items, search, statusFilter]);
+
+  const lowStockCount = items.filter(i => i.lowStock).length;
+  const totalItems = items.length;
+  const totalUnits = items.reduce((s, i) => s + i.quantityInStock, 0);
+
+  const afterAction = () => {
+    setRestockItem(null);
+    setThresholdItem(null);
+    load();
+  };
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 max-w-screen-xl mx-auto">
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Inventory Management</h2>
-          <div className="flex space-x-3">
-            <button
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center space-x-2"
-              onClick={() => {/* Navigate to add item form */}}
-            >
-              <FaPlus />
-              Add Item
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              onClick={() => {/* Refresh inventory */}}
-            >
-              <FaSyncAlt />
-              Refresh
-            </button>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Monitor stock levels and reorder thresholds</p>
         </div>
+        <button onClick={load}
+          className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+          <FaSyncAlt className={`text-xs ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
 
-        {/* Search and filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Items</label>
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name or SKU..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Status</option>
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-xs text-gray-500 mb-1">Total SKUs</p>
+          <p className="text-2xl font-bold text-gray-900">{totalItems}</p>
         </div>
-
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-500">
-            Showing {filteredInventory.length} of {inventory.length} items
-          </div>
-          <div className="flex items-center space-x-3">
-            <label className="text-sm font-medium text-gray-700">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="ml-2 pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-xs text-gray-500 mb-1">Total Units</p>
+          <p className="text-2xl font-bold text-gray-900">{totalUnits.toLocaleString()}</p>
+        </div>
+        <div className={`rounded-xl border p-4 col-span-2 sm:col-span-1 ${lowStockCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+          <p className="text-xs text-gray-500 mb-1">Low Stock Alerts</p>
+          <p className={`text-2xl font-bold ${lowStockCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+            {lowStockCount}
+          </p>
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-48">
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, SKU or category…"
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm">
+          {(['all', 'low', 'ok'] as const).map(s => (
+            <button key={s} onClick={() => setStatusFilter(s)}
+              className={`px-3 py-2 font-medium transition-colors ${statusFilter === s ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              {s === 'all' ? 'All' : s === 'low' ? 'Low Stock' : 'In Stock'}
+            </button>
+          ))}
+        </div>
+        {(search || statusFilter !== 'all') && (
+          <button onClick={() => { setSearch(''); setStatusFilter('all'); }}
+            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 px-2">
+            <FaTimes className="text-xs" /> Clear
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {error && <div className="p-4 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
+
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Item
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unit
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Min Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Supplier
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Product</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Category</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Stock</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Threshold</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Location</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredInventory.length > 0 ? (
-                filteredInventory.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                          <FaBox className="text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">{item.name}</p>
-                        </div>
-                      </div>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100">
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-4 bg-gray-200 rounded animate-pulse" /></td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <FaBoxes className="mx-auto text-4xl text-gray-300 mb-3" />
+                    <p className="text-gray-500 font-medium">No inventory items found</p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {search || statusFilter !== 'all' ? 'Try adjusting your filters.' : 'Add products first to see inventory here.'}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map(item => (
+                  <tr key={item.inventoryId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">{item.productName}</div>
+                      <div className="text-xs text-gray-400 font-mono">{item.sku}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.sku}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="px-2 py-1 text-xs rounded-full bg-gray-100">
-                          {item.category}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.quantity} {item.unit}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.unit}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">Rs. {item.price.toFixed(2)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.minStock} {item.unit}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.supplier}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{item.location}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`${getInventoryStatusBadgeClass(item.status)} px-3 py-1 text-xs rounded-full`}>
-                        {getInventoryStatusLabel(item.status)}
+                    <td className="px-4 py-3 hidden sm:table-cell text-gray-600">{item.categoryName}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-semibold text-base ${item.lowStock ? 'text-red-600' : 'text-gray-900'}`}>
+                        {item.quantityInStock}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => {/* Edit item */}}
-                        className="text-indigo-600 hover:text-indigo-800"
-                        title="Edit"
-                      >
-                        <FaEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Delete"
-                      >
-                        <FaTrash className="h-4 w-4" />
-                      </button>
+                    <td className="px-4 py-3 text-center hidden md:table-cell text-gray-500">
+                      {item.lowStockThreshold}
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-gray-500 text-xs">
+                      {item.warehouseLocation || '—'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {item.lowStock ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-medium">
+                          <FaExclamationTriangle className="text-xs" /> Low
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">
+                          OK
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => setRestockItem(item)}
+                          className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Restock"
+                          aria-label="Restock">
+                          <FaArrowUp />
+                        </button>
+                        <button onClick={() => setThresholdItem(item)}
+                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Set threshold"
+                          aria-label="Set threshold">
+                          <FaCog />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
-              ) : (
-                <tr>
-                  <td colSpan={11} className="px-6 py-8 text-center text-gray-500">
-                    No inventory items found matching your criteria.
-                  </td>
-                </tr>
               )}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination would go here */}
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <span className="text-sm text-gray-500">
-            Showing 1-{filteredInventory.length > 0 ? filteredInventory.length : 0} of {inventory.length} items
-          </span>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              1
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              3
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 ml-2">
-              Next
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* Delete Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-xl p-8 w-96 max-w-md">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Delete Item</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete "{itemToDelete?.name}"? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      {restockItem && <RestockModal item={restockItem} onClose={() => setRestockItem(null)} onDone={afterAction} />}
+      {thresholdItem && <ThresholdModal item={thresholdItem} onClose={() => setThresholdItem(null)} onDone={afterAction} />}
     </div>
   );
-};
-
-// Helper function to get inventory status badge class
-const getInventoryStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'good':
-      return 'bg-green-100 text-green-800';
-    case 'low-stock':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'out-of-stock':
-      return 'bg-red-100 text-red-800';
-    case 'damaged':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-// Helper function to get inventory status label
-const getInventoryStatusLabel = (status: string) => {
-  switch (status) {
-    case 'good':
-      return 'Good';
-    case 'low-stock':
-      return 'Low Stock';
-    case 'out-of-stock':
-      return 'Out of Stock';
-    case 'damaged':
-      return 'Damaged';
-    default:
-      return 'Unknown';
-  }
 };
