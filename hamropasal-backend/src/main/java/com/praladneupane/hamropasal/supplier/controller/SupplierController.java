@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class SupplierController {
         return ResponseEntity.ok(APIResponse.success("Supplier fetched successfully", supplier));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<APIResponse<SupplierResponse>> createSupplier(
             @RequestBody @Valid CreateSupplierRequest request) {
@@ -40,6 +42,7 @@ public class SupplierController {
                 .body(APIResponse.success("Supplier created successfully", supplier));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<APIResponse<SupplierResponse>> updateSupplier(
             @PathVariable Long id,
@@ -48,6 +51,7 @@ public class SupplierController {
         return ResponseEntity.ok(APIResponse.success("Supplier updated successfully", supplier));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<Void>> deleteSupplier(@PathVariable Long id) {
         supplierService.deleteSupplier(id);

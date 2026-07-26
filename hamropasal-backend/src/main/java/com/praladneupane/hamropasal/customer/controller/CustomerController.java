@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<APIResponse<CustomerResponse>> createCustomer(
             @RequestBody @Valid CreateCustomerRequest request) {
@@ -29,6 +31,7 @@ public class CustomerController {
                 .body(APIResponse.success("Customer created successfully", customer));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public ResponseEntity<APIResponse<CustomerResponse>> updateCustomer(
             @RequestBody @Valid UpdateCustomerRequest request) {
@@ -53,6 +56,7 @@ public class CustomerController {
         return ResponseEntity.ok(APIResponse.success("Customers fetched successfully", customers));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<Void>> deleteCustomer(@PathVariable Long id) {
         customerService.delete(id);

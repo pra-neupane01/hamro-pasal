@@ -11,6 +11,7 @@ import com.praladneupane.hamropasal.inventory.service.InventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,6 +41,7 @@ public class InventoryController {
         return ResponseEntity.ok(APIResponse.success("Inventory fetched successfully", response));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/restock")
     public ResponseEntity<APIResponse<InventoryUpdateResponse>> restockProduct(
             @RequestBody @Valid RestockProductRequest request) {
@@ -54,6 +56,7 @@ public class InventoryController {
         return ResponseEntity.ok(APIResponse.success("Product sold successfully", response));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/threshold")
     public ResponseEntity<APIResponse<InventoryUpdateResponse>> updateThreshold(
             @RequestBody @Valid UpdateInventoryThresholdRequest request) {
