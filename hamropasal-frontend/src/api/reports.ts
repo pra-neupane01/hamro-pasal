@@ -14,8 +14,8 @@ export interface DashboardStats {
 
 export const reportsApi = {
   getDashboardStats: () =>
-    api.get<APIResponse<DashboardStats>>('/api/v1/reports/dashboard/stats'),
+    api.get<APIResponse<DashboardStats>>('/reports/dashboard/stats'),
 
   getMonthlyRevenue: () =>
-    api.get<APIResponse<number>>('/api/v1/reports/monthly-revenue'),
+    api.get<APIResponse<number>>('/reports/monthly-revenue'),
 };

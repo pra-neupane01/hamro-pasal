@@ -16,6 +16,7 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { Customers } from './pages/Customers';
 import { Suppliers } from './pages/Suppliers';
+import { Unauthorized } from './pages/Unauthorized';
 
 function App() {
   return (
@@ -25,22 +26,25 @@ function App() {
           <Header />
           <main className="flex-1">
             <Routes>
-              {/* Public routes */}
+              {/* Public */}
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
-              {/* Protected routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-              <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
-              <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-              <Route path="/suppliers" element={<ProtectedRoute><Suppliers /></ProtectedRoute>} />
+              {/* Both roles */}
+              <Route path="/dashboard"  element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/sales"      element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+              <Route path="/customers"  element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+
+              {/* Admin only */}
+              <Route path="/products"   element={<ProtectedRoute requireAdmin><Products /></ProtectedRoute>} />
+              <Route path="/inventory"  element={<ProtectedRoute requireAdmin><Inventory /></ProtectedRoute>} />
+              <Route path="/reports"    element={<ProtectedRoute requireAdmin><Reports /></ProtectedRoute>} />
+              <Route path="/suppliers"  element={<ProtectedRoute requireAdmin><Suppliers /></ProtectedRoute>} />
+              <Route path="/settings"   element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

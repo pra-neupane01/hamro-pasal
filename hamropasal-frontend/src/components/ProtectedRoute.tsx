@@ -16,7 +16,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: Props) {
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;

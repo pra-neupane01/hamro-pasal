@@ -22,18 +22,18 @@ export const customersApi = {
     if (params.page !== undefined) p.set('page', String(params.page));
     if (params.size !== undefined) p.set('size', String(params.size));
     const q = p.toString();
-    return api.get<APIResponse<PagedResponse<Customer>>>(`/api/v1/customers${q ? '?' + q : ''}`);
+    return api.get<APIResponse<PagedResponse<Customer>>>(`/customers${q ? '?' + q : ''}`);
   },
 
   getById: (id: number) =>
-    api.get<APIResponse<Customer>>(`/api/v1/customers/${id}`),
+    api.get<APIResponse<Customer>>(`/customers/${id}`),
 
   create: (data: { fullName: string; email?: string; phone: string; address?: string; city?: string }) =>
-    api.post<APIResponse<Customer>>('/api/v1/customers', data),
+    api.post<APIResponse<Customer>>('/customers', data),
 
   update: (data: { id: number; fullName?: string; email?: string; phone?: string; address?: string; city?: string; active?: boolean }) =>
-    api.put<APIResponse<Customer>>('/api/v1/customers', data),
+    api.put<APIResponse<Customer>>('/customers', data),
 
   delete: (id: number) =>
-    api.delete<APIResponse<void>>(`/api/v1/customers/${id}`),
+    api.delete<APIResponse<void>>(`/customers/${id}`),
 };
