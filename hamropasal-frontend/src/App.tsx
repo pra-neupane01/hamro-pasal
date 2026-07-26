@@ -14,6 +14,8 @@ import { Sales } from './pages/Sales';
 import { Inventory } from './pages/Inventory';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
+import { Customers } from './pages/Customers';
+import { Suppliers } from './pages/Suppliers';
 
 function App() {
   return (
@@ -37,10 +39,8 @@ function App() {
               <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-
-              {/* Customers & Suppliers pages (added soon) */}
-              <Route path="/customers" element={<ProtectedRoute><div className="p-8 text-center text-gray-500">Customers page coming soon</div></ProtectedRoute>} />
-              <Route path="/suppliers" element={<ProtectedRoute><div className="p-8 text-center text-gray-500">Suppliers page coming soon</div></ProtectedRoute>} />
+              <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+              <Route path="/suppliers" element={<ProtectedRoute><Suppliers /></ProtectedRoute>} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

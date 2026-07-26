@@ -1,292 +1,230 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FaChartLine,
-  FaBoxOpen,
-  FaUsers,
-  FaTruckLoading,
-  FaChartBar,
-  FaTags,
-  FaMoneyBillWave as FaMoneyCheckDollar,
-  FaUserFriends,
-  FaShippingFast,
-  FaCalendarAlt
+  FaBoxOpen, FaUsers, FaTruck, FaExclamationTriangle,
+  FaShoppingCart, FaMoneyBillWave, FaChartLine, FaArrowRight,
+  FaSyncAlt, FaBoxes,
 } from 'react-icons/fa';
-import { FaClipboardList } from 'react-icons/fa6';
+import { reportsApi, type DashboardStats } from '../api/reports';
+import { salesApi, type Sale } from '../api/sales';
+import { inventoryApi, type InventoryItem } from '../api/inventory';
+import { useAuth } from '../context/AuthContext';
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat('ne-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 }).format(n);
+
+const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-NP', { month: 'short', day: 'numeric' });
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+function StatCard({ label, value, sub, icon: Icon, color, to }: {
+  label: string; value: string | number; sub?: string;
+  icon: React.ElementType; color: string; to: string;
+}) {
+  return (
+    <Link to={to} className="bg-white rounded-xl border border-gray-200 p-5 flex items-start gap-4 hover:shadow-sm transition-shadow group">
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>
+        <Icon className="text-white text-base" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-2xl font-bold text-gray-900 mt-0.5 truncate">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+      <FaArrowRight className="text-gray-300 group-hover:text-gray-500 mt-1 flex-shrink-0 transition-colors" />
+    </Link>
+  );
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────────────────
 export const Dashboard = () => {
-  const [stats, setStats] = useState<any[]>([]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
-  const [salesChartData, setSalesChartData] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+  const [lowStock, setLowStock] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    // Simulate API calls
-    const fetchData = async () => {
-      try {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-        // Mock stats data
-        setStats([
-          { title: 'Total Sales Today', value: '$2,450', change: '+12%', icon: <FaMoneyCheckDollar className="text-green-500" />, trend: 'up' },
-          { title: 'Orders Today', value: '42', change: '+8%', icon: <FaClipboardList className="text-blue-500" />, trend: 'up' },
-          { title: 'Customers Served', value: '128', change: '+5%', icon: <FaUserFriends className="text-purple-500" />, trend: 'up' },
-          { title: 'Inventory Value', value: '$89,200', change: '+3%', icon: <FaBoxOpen className="text-indigo-500" />, trend: 'up' }
-        ]);
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    const [statsRes, salesRes, inventoryRes] = await Promise.allSettled([
+      reportsApi.getDashboardStats(),
+      salesApi.getAll(),
+      inventoryApi.getAll(),
+    ]);
 
-        // Mock recent orders
-        setRecentOrders([
-          { id: 'ORD-7892', customer: 'John Doe', items: 3, total: 89.99, status: 'delivered', date: '2024-01-15' },
-          { id: 'ORD-7891', customer: 'Jane Smith', items: 1, total: 45.50, status: 'processing', date: '2024-01-15' },
-          { id: 'ORD-7890', customer: 'Bob Wilson', items: 2, total: 120.00, status: 'shipped', date: '2024-01-14' },
-          { id: 'ORD-7889', customer: 'Alice Brown', items: 4, total: 200.75, status: 'pending', date: '2024-01-14' },
-          { id: 'ORD-7888', customer: 'Charlie Davis', items: 1, total: 67.25, status: 'delivered', date: '2024-01-13' }
-        ]);
+    if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+    else setError('Could not load dashboard stats. Is the backend running?');
 
-        // Mock low stock items
-        setLowStockItems([
-          { id: 1, name: 'Basmati Rice (5kg)', sku: 'RICE-001', currentStock: 5, minStock: 10, category: 'Groceries' },
-          { id: 2, name: 'Coca-Cola 500ml', sku: 'DRINK-005', currentStock: 3, minStock: 15, category: 'Beverages' },
-          { id: 3, name: 'Toothpaste Colgate', sku: 'HEALTH-012', currentStock: 2, minStock: 8, category: 'Personal Care' },
-          { id: 4, name: 'White Bread Loaf', sku: 'BAKERY-003', currentStock: 7, minStock: 12, category: 'Bakery' },
-          { id: 5, name: 'Chicken Masala', sku: 'SPICE-008', currentStock: 4, minStock: 10, category: 'Spices' }
-        ]);
+    if (salesRes.status === 'fulfilled') {
+      setRecentSales(salesRes.value.data.slice(0, 6));
+    }
 
-        // Mock sales chart data (last 7 days)
-        setSalesChartData([
-          { day: 'Mon', sales: 1200 },
-          { day: 'Tue', sales: 1350 },
-          { day: 'Wed', sales: 980 },
-          { day: 'Thu', sales: 1420 },
-          { day: 'Fri', sales: 1850 },
-          { day: 'Sat', sales: 2100 },
-          { day: 'Sun', sales: 1650 }
-        ]);
+    if (inventoryRes.status === 'fulfilled') {
+      setLowStock(inventoryRes.value.data.filter(i => i.lowStock).slice(0, 5));
+    }
 
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    setLoading(false);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-50">
-                  <div className="h-6 w-6 bg-blue-200 rounded-full"></div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Loading...</p>
-                  <p className="text-lg font-bold text-gray-900">Loading...</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders</h3>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div key={item} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Order #ORD-789{item}</p>
-                    <p className="text-sm text-gray-500">Customer Name</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Delivered</span>
-                    <span className="text-sm font-medium">$89.99</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Low Stock Alerts</h3>
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((item) => (
-                <div key={item} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Product Name</p>
-                    <p className="text-sm text-gray-500">Category Name</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Low Stock</span>
-                    <span className="text-sm font-medium">5 pcs</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-100 animate-pulse">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sales Trend (Last 7 Days)</h3>
-          <div className="h-96 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-center h-full text-gray-400">Loading chart...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <div className="p-3 rounded-full bg-indigo-50">
-                {stat.icon}
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="text-lg font-bold text-gray-900">{stat.value}</p>
-                <div className="flex items-center text-sm mt-1">
-                  <span className={stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}>
-                    {stat.change}
-                  </span>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-screen-xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{greeting}, {user?.fullName?.split(' ')[0]} 👋</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Here's what's happening with your store today.</p>
+        </div>
+        <button onClick={load}
+          className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors self-start sm:self-auto">
+          <FaSyncAlt className={`text-xs ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-24 animate-pulse">
+              <div className="flex gap-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                  <div className="h-6 bg-gray-200 rounded w-1/2" />
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <>
+            <StatCard label="Monthly Revenue" value={fmt(stats?.monthlyRevenue ?? 0)}
+              sub="This month" icon={FaMoneyBillWave} color="bg-green-500" to="/reports" />
+            <StatCard label="Today's Sales" value={fmt(stats?.todaySales ?? 0)}
+              sub={`${stats?.todayTransactions ?? 0} transactions`} icon={FaShoppingCart} color="bg-indigo-500" to="/sales" />
+            <StatCard label="Total Products" value={stats?.totalProducts ?? 0}
+              sub="In catalog" icon={FaBoxOpen} color="bg-violet-500" to="/products" />
+            <StatCard label="Low Stock Alerts" value={stats?.lowStockProducts ?? 0}
+              sub={stats?.lowStockProducts ? 'Needs reorder' : 'All stocked'}
+              icon={FaExclamationTriangle}
+              color={stats?.lowStockProducts ? 'bg-red-500' : 'bg-green-500'} to="/inventory" />
+          </>
+        )}
       </div>
 
-      {/* Charts and Recent Activity */}
+      {/* Second row cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 h-24 animate-pulse">
+              <div className="flex gap-4"><div className="w-10 h-10 bg-gray-200 rounded-lg" /><div className="flex-1 space-y-2"><div className="h-3 bg-gray-200 rounded w-3/4" /><div className="h-6 bg-gray-200 rounded w-1/2" /></div></div>
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard label="Total Customers" value={stats?.totalCustomers ?? 0}
+              icon={FaUsers} color="bg-blue-500" to="/customers" />
+            <StatCard label="Total Suppliers" value={stats?.totalSuppliers ?? 0}
+              icon={FaTruck} color="bg-teal-500" to="/suppliers" />
+            <StatCard label="Inventory Value" value={fmt(stats?.totalInventoryValue ?? 0)}
+              icon={FaBoxes} color="bg-orange-500" to="/inventory" />
+          </>
+        )}
+      </div>
+
+      {/* Bottom two panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Orders */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
-            <Link to="/orders" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
-              View All
+        {/* Recent Sales */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <FaChartLine className="text-indigo-500" /> Recent Sales
+            </h2>
+            <Link to="/sales" className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+              View all <FaArrowRight className="text-xs" />
             </Link>
           </div>
-
-          {recentOrders.length > 0 ? (
+          {loading ? (
             <div className="space-y-3">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">Order #{order.id}</p>
-                    <p className="text-sm text-gray-500">{order.customer}</p>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : recentSales.length === 0 ? (
+            <div className="py-8 text-center text-gray-400">
+              <FaShoppingCart className="mx-auto text-3xl mb-2" />
+              <p className="text-sm">No sales yet. <Link to="/sales" className="text-indigo-600">Create the first one</Link></p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {recentSales.map(sale => (
+                <div key={sale.id} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Sale #{sale.id}</p>
+                    <p className="text-xs text-gray-400">{fmtDate(sale.createdAt)} · {sale.cashierName} · {sale.items.length} item{sale.items.length !== 1 ? 's' : ''}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`${getStatusClass(order.status)} px-2 py-1 text-xs rounded-full`}>
-                      {order.status}
-                    </span>
-                    <span className="text-sm font-medium">${order.total.toFixed(2)}</span>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-gray-900">{fmt(sale.netAmount)}</p>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                      sale.paymentMethod === 'CASH' ? 'bg-green-100 text-green-700' :
+                      sale.paymentMethod === 'ESEWA' ? 'bg-purple-100 text-purple-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>{sale.paymentMethod}</span>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-center text-gray-500 py-4">No recent orders found.</p>
           )}
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Low Stock Alerts</h3>
-            <Link to="/inventory" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
-              View Inventory
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <FaExclamationTriangle className="text-red-500" /> Low Stock Alerts
+            </h2>
+            <Link to="/inventory" className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+              View all <FaArrowRight className="text-xs" />
             </Link>
           </div>
-
-          {lowStockItems.length > 0 ? (
+          {loading ? (
             <div className="space-y-3">
-              {lowStockItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{item.name}</p>
-                    <p className="text-sm text-gray-500">{item.category}</p>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : lowStock.length === 0 ? (
+            <div className="py-8 text-center text-gray-400">
+              <FaBoxes className="mx-auto text-3xl mb-2 text-green-400" />
+              <p className="text-sm text-green-600 font-medium">All products are well stocked!</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {lowStock.map(item => (
+                <div key={item.inventoryId} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{item.productName}</p>
+                    <p className="text-xs text-gray-400 font-mono">{item.sku} · {item.categoryName}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                      Low Stock
-                    </span>
-                    <span className="text-sm font-medium">{item.currentStock} {item.unit || 'pcs'}</span>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-red-600">{item.quantityInStock} left</p>
+                    <p className="text-xs text-gray-400">threshold: {item.lowStockThreshold}</p>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-center text-gray-500 py-4">All items are well stocked!</p>
           )}
-        </div>
-      </div>
-
-      {/* Sales Chart */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Sales Trend (Last 7 Days)</h3>
-          <div className="flex items-center space-x-2">
-            <button className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">
-              Daily
-            </button>
-            <button className="px-3 py-1 text-sm bg-indigo-100 text-indigo-800 rounded">
-              Weekly
-            </button>
-            <button className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">
-              Monthly
-            </button>
-          </div>
-        </div>
-        <div className="h-96">
-          {/* In a real app, this would be a chart component like Chart.js or Recharts component */}
-          <div className="relative h-full w-full">
-            {/* Placeholder for chart */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-indigo-600 opacity-20"></div>
-            <div className="absolute inset-0 pointer-events-none">
-              {/* Chart points would go here */}
-              {salesChartData.map((point, index) => (
-                <div key={index} className="absolute bottom-8 left-[calc(50%_-_50%+{index*12}px)] w-2 h-2 bg-indigo-600 rounded-full" />
-              ))}
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 text-center text-xs text-gray-500 pb-2">
-              {/* X-axis labels */}
-              <div className="flex justify-between px-2">
-                {salesChartData.map((point, index) => (
-                  <span key={index} className="w-[calc(100%/_${salesChartData.length})] text-center">{point.day}</span>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
-};
-
-// Helper function to get status class
-const getStatusClass = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'delivered':
-      return 'bg-green-100 text-green-800';
-    case 'shipped':
-      return 'bg-blue-100 text-blue-800';
-    case 'processing':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'pending':
-      return 'bg-gray-100 text-gray-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
 };
