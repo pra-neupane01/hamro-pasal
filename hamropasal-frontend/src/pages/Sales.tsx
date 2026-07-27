@@ -5,9 +5,7 @@ import {
 } from 'react-icons/fa';
 import { salesApi, type Sale, type PaymentMethod } from '../api/sales';
 import { productsApi, type Product } from '../api/products';
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat('ne-NP', { style: 'currency', currency: 'NPR' }).format(n);
+import { formatCurrency } from '../lib/format';
 
 const fmtDate = (d: string) =>
   new Date(d).toLocaleString('en-NP', { dateStyle: 'medium', timeStyle: 'short' });
@@ -46,12 +44,12 @@ function ReceiptModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
   };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+      <div className="bg-white rounded shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h3 className="font-semibold text-gray-900">Receipt #{sale.id}</h3>
           <div className="flex gap-1">
-            <button onClick={print} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" aria-label="Print"><FaPrint /></button>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close"><FaTimes /></button>
+            <button onClick={print} className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" aria-label="Print"><FaPrint /></button>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition-colors" aria-label="Close"><FaTimes /></button>
           </div>
         </div>
         <div ref={receiptRef} className="p-5 font-mono text-xs space-y-3">
@@ -144,20 +142,20 @@ function NewSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl my-4 sm:my-0 flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
+      <div className="bg-white rounded shadow-xl w-full max-w-2xl my-4 sm:my-0 flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">New Sale</h2>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Close"><FaTimes /></button>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors" aria-label="Close"><FaTimes /></button>
         </div>
 
         <div className="flex flex-col sm:flex-row flex-1 overflow-hidden min-h-0">
           {/* Product picker */}
-          <div className="sm:w-1/2 border-b sm:border-b-0 sm:border-r border-gray-200 flex flex-col p-4 overflow-hidden max-h-64 sm:max-h-none">
+          <div className="sm:w-1/2 border-b sm:border-b-0 sm:border-r border-gray-200 flex flex-col p-3 overflow-hidden max-h-64 sm:max-h-none">
             <div className="relative mb-3 flex-shrink-0">
               <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
               <input value={productSearch} onChange={e => setProductSearch(e.target.value)}
                 placeholder="Search products…"
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
             </div>
             <div className="overflow-y-auto flex-1 space-y-1">
               {loadingProducts ? (
@@ -166,11 +164,11 @@ function NewSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
                 <div className="py-6 text-center text-gray-400 text-sm">No products found</div>
               ) : filtered.map(p => (
                 <button key={p.productId} onClick={() => addToCart(p)}
-                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 hover:border-indigo-200 transition-colors border border-transparent">
+                  className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 hover:border-slate-200 transition-colors border border-transparent">
                   <div className="text-sm font-medium text-gray-900">{p.productName}</div>
                   <div className="flex justify-between text-xs text-gray-500 mt-0.5">
                     <span>{p.sku}</span>
-                    <span className="font-medium text-indigo-600">NPR {p.price}</span>
+                    <span className="font-medium text-slate-700">{formatCurrency(p.price)}</span>
                   </div>
                 </button>
               ))}
@@ -178,16 +176,16 @@ function NewSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
           </div>
 
           {/* Cart */}
-          <div className="sm:w-1/2 flex flex-col p-4 overflow-hidden">
+          <div className="sm:w-1/2 flex flex-col p-3 overflow-hidden">
             <h3 className="text-sm font-semibold text-gray-700 mb-3 flex-shrink-0">Cart ({cart.length} items)</h3>
             <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
               {cart.length === 0 ? (
                 <div className="py-6 text-center text-gray-400 text-sm">No items added yet</div>
               ) : cart.map(line => (
-                <div key={line.product.productId} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                <div key={line.product.productId} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{line.product.productName}</p>
-                    <p className="text-xs text-gray-500">NPR {line.product.price} × {line.quantity} = NPR {(line.product.price * line.quantity).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">{formatCurrency(line.product.price)} × {line.quantity} = {formatCurrency(line.product.price * line.quantity)}</p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button onClick={() => updateQty(line.product.productId, line.quantity - 1)}
@@ -207,23 +205,23 @@ function NewSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600 whitespace-nowrap">Tax %</label>
                 <input type="number" min="0" max="100" step="0.5" value={taxPct} onChange={e => setTaxPct(e.target.value)}
-                  className="w-16 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  className="w-16 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
                 <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
-                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-500">
                   <option value="CASH">Cash</option>
                   <option value="ESEWA">eSewa</option>
                   <option value="BANKING">Banking</option>
                 </select>
               </div>
               <div className="text-sm space-y-1">
-                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
-                <div className="flex justify-between text-gray-500"><span>Tax ({taxPct}%)</span><span>{fmt(taxAmt)}</span></div>
-                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-1"><span>Total</span><span>{fmt(total)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Tax ({taxPct}%)</span><span>{formatCurrency(taxAmt)}</span></div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-1"><span>Total</span><span>{formatCurrency(total)}</span></div>
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <button onClick={submit} disabled={loading || cart.length === 0}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                {loading ? 'Processing…' : `Complete Sale · ${fmt(total)}`}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-900 active:bg-black text-white text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {loading ? 'Processing…' : `Complete Sale · ${formatCurrency(total)}`}
               </button>
             </div>
           </div>
@@ -273,50 +271,50 @@ export const Sales = () => {
   return (
     <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales</h1>
+          <h1 className="text-xl font-bold text-gray-900">Sales</h1>
           <p className="text-sm text-gray-500 mt-0.5">{filtered.length} transaction{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
           <button onClick={() => exportCSV(filtered)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
             <FaDownload className="text-xs" /> Export CSV
           </button>
           <button onClick={() => setNewSaleOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded transition-colors shadow-sm">
             <FaPlus className="text-xs" /> New Sale
           </button>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-5">
+        <div className="bg-white rounded border border-gray-200 p-3">
           <p className="text-xs text-gray-500 mb-1">Transactions</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900">{filtered.length}</p>
+          <p className="text-lg sm:text-xl font-bold text-gray-900">{filtered.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-white rounded border border-gray-200 p-3">
           <p className="text-xs text-gray-500 mb-1">Net Revenue</p>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{fmt(totalRevenue)}</p>
+          <p className="text-base sm:text-xl font-bold text-gray-900 truncate">{formatCurrency(totalRevenue)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-white rounded border border-gray-200 p-3">
           <p className="text-xs text-gray-500 mb-1">Total Tax</p>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">{fmt(totalTax)}</p>
+          <p className="text-base sm:text-xl font-bold text-gray-900 truncate">{formatCurrency(totalTax)}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5">
-        <div className="flex flex-col sm:flex-row gap-3">
+      <div className="bg-white rounded border border-gray-200 p-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by ID, cashier, product…"
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
           <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[160px]">
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[160px]">
             <option value="">All Payments</option>
             <option value="CASH">Cash</option>
             <option value="ESEWA">eSewa</option>
@@ -324,7 +322,7 @@ export const Sales = () => {
           </select>
           {(search || paymentFilter) && (
             <button onClick={() => { setSearch(''); setPaymentFilter(''); }}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors self-start">
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors self-start">
               <FaTimes className="text-xs" /> Clear
             </button>
           )}
@@ -332,8 +330,8 @@ export const Sales = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {error && <div className="p-4 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
+      <div className="bg-white rounded border border-gray-200 overflow-hidden">
+        {error && <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[500px]">
             <thead>
@@ -379,7 +377,7 @@ export const Sales = () => {
                       <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{fmtDate(sale.createdAt)}</td>
                       <td className="px-4 py-3 hidden md:table-cell text-gray-600">{sale.cashierName}</td>
                       <td className="px-4 py-3 text-center text-gray-700">{sale.items.length}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">{fmt(sale.netAmount)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCurrency(sale.netAmount)}</td>
                       <td className="px-4 py-3 text-center hidden sm:table-cell">
                         <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium ${paymentColors[sale.paymentMethod]}`}>
                           {paymentLabel[sale.paymentMethod]}
@@ -387,20 +385,20 @@ export const Sales = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button onClick={() => setReceiptSale(sale)}
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" aria-label="View receipt">
+                          className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" aria-label="View receipt">
                           <FaReceipt className="text-sm" />
                         </button>
                       </td>
                     </tr>
                     {expandedId === sale.id && (
-                      <tr key={`${sale.id}-exp`} className="border-b border-gray-100 bg-indigo-50/30">
+                      <tr key={`${sale.id}-exp`} className="border-b border-gray-100 bg-slate-50/30">
                         <td colSpan={8} className="px-6 sm:px-10 py-3">
                           <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Items in this sale</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                             {sale.items.map(item => (
-                              <div key={item.id} className="text-xs bg-white rounded-lg border border-gray-200 p-2">
+                              <div key={item.id} className="text-xs bg-white rounded border border-gray-200 p-2">
                                 <p className="font-medium text-gray-900">{item.productName}</p>
-                                <p className="text-gray-500">{item.quantity} × {fmt(item.unitPrice)} = {fmt(item.subtotal)}</p>
+                                <p className="text-gray-500">{item.quantity} × {formatCurrency(item.unitPrice)} = {formatCurrency(item.subtotal)}</p>
                               </div>
                             ))}
                           </div>
