@@ -4,10 +4,10 @@ import {
   FaBars, FaTimes, FaBoxOpen, FaBoxes,
   FaChartLine, FaChartBar, FaUsers, FaTruck,
   FaTachometerAlt, FaCog, FaSignOutAlt, FaUserCircle,
-  FaShieldAlt,
 } from 'react-icons/fa';
 import { FaRegBell } from 'react-icons/fa6';
 import { useAuth } from '../context/AuthContext';
+import { Logo, LogoIcon } from './Logo';
 
 interface NavItem {
   to: string;
@@ -36,7 +36,6 @@ export const Header = () => {
   const location = useLocation();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close user dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -47,7 +46,6 @@ export const Header = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const handleLogout = () => {
@@ -58,23 +56,19 @@ export const Header = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isPublicPage = PUBLIC_PATHS.includes(location.pathname);
-
-  // Filter nav items by role
   const visibleNav = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 flex h-16 items-center justify-between gap-4">
+    <header className="bg-white border-b sticky top-0 z-40">
+      <div className="max-w-screen-xl mx-auto px-3 sm:px-4 flex h-14 items-center justify-between gap-3">
 
         {/* Logo */}
         <Link
           to={isAuthenticated ? '/dashboard' : '/'}
-          className="flex items-center gap-2 flex-shrink-0 group"
+          className="flex items-center gap-2 flex-shrink-0 text-slate-900 hover:text-slate-700 transition-colors"
         >
-          <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm group-hover:bg-indigo-700 transition-colors">
-            <span className="text-white font-bold text-lg leading-none">H</span>
-          </div>
-          <span className="font-bold text-lg text-gray-900 hidden sm:block">Hamropasal</span>
+          <LogoIcon className="w-7 h-7 hidden sm:block" />
+          <span className="font-semibold text-base">Hamropasal</span>
         </Link>
 
         {/* Desktop nav */}
@@ -84,10 +78,10 @@ export const Header = () => {
               <Link
                 key={to}
                 to={to}
-                className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   isActive(to)
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-indigo-700 hover:bg-indigo-50'
+                    ? 'bg-slate-800 text-white'
+                    : 'text-gray-600 hover:text-slate-900 hover:bg-gray-100'
                 }`}
               >
                 {label}
@@ -102,80 +96,69 @@ export const Header = () => {
             <>
               {/* Notification bell */}
               <button
-                className="relative p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                className="relative p-2 text-gray-500 hover:text-slate-900 hover:bg-gray-100 rounded transition-colors"
                 aria-label="Notifications"
               >
-                <FaRegBell className="text-lg" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+                <FaRegBell className="text-base" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
               </button>
 
               {/* User dropdown */}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(v => !v)}
-                  className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg border transition-all duration-150 ${
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded border transition-colors ${
                     userMenuOpen
-                      ? 'border-indigo-300 bg-indigo-50'
+                      ? 'border-slate-300 bg-slate-50'
                       : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
                   }`}
                   aria-label="User menu"
                   aria-expanded={userMenuOpen}
                 >
-                  <FaUserCircle className="text-xl text-indigo-600 flex-shrink-0" />
+                  <FaUserCircle className="text-lg text-slate-600 flex-shrink-0" />
                   <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-24 truncate">
                     {user?.fullName?.split(' ')[0]}
-                  </span>
-                  <span className={`hidden md:inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold tracking-wide ${
-                    isAdmin
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    {isAdmin && <FaShieldAlt className="text-[10px]" />}
-                    {user?.role}
                   </span>
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="absolute right-0 mt-2 w-52 bg-white border rounded shadow-lg py-1 z-50">
+                    <div className="px-3 py-2 border-b">
                       <p className="text-sm font-semibold text-gray-900 truncate">{user?.fullName}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">{user?.email}</p>
-                      <span className={`inline-flex items-center gap-1 mt-1.5 text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        isAdmin ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
-                      }`}>
-                        {isAdmin && <FaShieldAlt className="text-[10px]" />}
-                        {isAdmin ? 'Administrator' : 'Cashier'}
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+                      <span className="inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wide font-semibold bg-slate-100 text-slate-700">
+                        {user?.role}
                       </span>
                     </div>
                     {isAdmin && (
                       <Link
                         to="/settings"
                         onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-700 transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
-                        <FaCog className="text-gray-400 flex-shrink-0" />
+                        <FaCog className="text-gray-400 flex-shrink-0 text-xs" />
                         Settings
                       </Link>
                     )}
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                     >
-                      <FaSignOutAlt className="flex-shrink-0" />
+                      <FaSignOutAlt className="flex-shrink-0 text-xs" />
                       Sign out
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Mobile hamburger — only when authenticated on app pages */}
+              {/* Mobile hamburger */}
               {!isPublicPage && (
                 <button
                   onClick={() => setMobileOpen(v => !v)}
-                  className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  className="lg:hidden p-2 rounded text-gray-500 hover:bg-gray-100"
                   aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
                 >
-                  {mobileOpen ? <FaTimes className="text-lg" /> : <FaBars className="text-lg" />}
+                  {mobileOpen ? <FaTimes className="text-base" /> : <FaBars className="text-base" />}
                 </button>
               )}
             </>
@@ -183,13 +166,13 @@ export const Header = () => {
             <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="text-sm font-medium text-gray-600 hover:text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-slate-900 px-3 py-1.5 rounded hover:bg-gray-100"
               >
                 Sign in
               </Link>
               <Link
                 to="/register"
-                className="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                className="text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded"
               >
                 Get started
               </Link>
@@ -200,45 +183,41 @@ export const Header = () => {
 
       {/* Mobile drawer */}
       {mobileOpen && isAuthenticated && !isPublicPage && (
-        <div className="lg:hidden border-t border-gray-200 bg-white shadow-lg">
-          {/* Role banner */}
-          <div className={`px-4 py-2.5 text-xs font-semibold flex items-center gap-1.5 ${
-            isAdmin ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'
-          }`}>
-            {isAdmin && <FaShieldAlt />}
-            {isAdmin ? 'Logged in as Administrator' : 'Logged in as Cashier'}
+        <div className="lg:hidden border-t bg-white shadow-lg">
+          <div className="px-2.5 py-2 text-[10px] font-semibold flex items-center gap-1.5 bg-slate-50 text-slate-600 uppercase tracking-wide">
+            {isAdmin ? 'Administrator' : 'Cashier'}
           </div>
-          <nav className="px-3 py-2 space-y-0.5">
+          <nav className="px-2 py-2 space-y-0.5">
             {visibleNav.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium ${
                   isActive(to)
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-700'
+                    ? 'bg-slate-800 text-white'
+                    : 'text-gray-700 hover:bg-slate-100'
                 }`}
               >
-                <Icon className="text-base flex-shrink-0" />
+                <Icon className="text-sm flex-shrink-0" />
                 {label}
               </Link>
             ))}
           </nav>
-          <div className="px-3 pb-3 pt-1 border-t border-gray-100 mt-1">
+          <div className="px-2 pb-2 pt-1 border-t">
             {isAdmin && (
               <Link
                 to="/settings"
-                className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <FaCog className="text-base flex-shrink-0" />
+                <FaCog className="text-sm flex-shrink-0" />
                 Settings
               </Link>
             )}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="flex items-center gap-2.5 w-full px-3 py-2 rounded text-sm font-medium text-red-600 hover:bg-red-50"
             >
-              <FaSignOutAlt className="text-base flex-shrink-0" />
+              <FaSignOutAlt className="text-sm flex-shrink-0" />
               Sign out
             </button>
           </div>

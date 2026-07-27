@@ -21,20 +21,20 @@ function RestockModal({ item, onClose, onDone }: { item: InventoryItem; onClose:
   };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded shadow-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
         <h3 className="font-semibold text-gray-900 mb-1">Restock — {item.productName}</h3>
         <p className="text-sm text-gray-500 mb-4">Current stock: <strong>{item.quantityInStock}</strong></p>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Quantity to add</label>
             <input type="number" min="1" value={qty} onChange={e => setQty(e.target.value)} required autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded">Cancel</button>
             <button type="submit" disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50">
+              className="px-3 py-1.5 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded disabled:opacity-50">
               {loading ? 'Restocking…' : 'Restock'}
             </button>
           </div>
@@ -59,20 +59,20 @@ function ThresholdModal({ item, onClose, onDone }: { item: InventoryItem; onClos
   };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded shadow-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
         <h3 className="font-semibold text-gray-900 mb-1">Set Threshold — {item.productName}</h3>
         <p className="text-sm text-gray-500 mb-4">Current: <strong>{item.lowStockThreshold}</strong></p>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">New threshold</label>
             <input type="number" min="0" value={threshold} onChange={e => setThreshold(e.target.value)} required autoFocus
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded">Cancel</button>
             <button type="submit" disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50">
+              className="px-3 py-1.5 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded disabled:opacity-50">
               {loading ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -123,53 +123,53 @@ export const Inventory = () => {
   return (
     <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+          <h1 className="text-xl font-bold text-gray-900">Inventory</h1>
           <p className="text-sm text-gray-500 mt-0.5">Monitor stock levels and reorder thresholds</p>
         </div>
         <button onClick={load}
-          className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors self-start sm:self-auto">
+          className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors self-start sm:self-auto">
           <FaSyncAlt className={`text-xs ${loading ? 'animate-spin' : ''}`} /> Refresh
         </button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-5">
+        <div className="bg-white rounded border border-gray-200 p-3">
           <p className="text-xs text-gray-500 mb-1">Total SKUs</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900">{items.length}</p>
+          <p className="text-lg sm:text-xl font-bold text-gray-900">{items.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-white rounded border border-gray-200 p-3">
           <p className="text-xs text-gray-500 mb-1">Total Units</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalUnits.toLocaleString()}</p>
+          <p className="text-lg sm:text-xl font-bold text-gray-900">{totalUnits.toLocaleString()}</p>
         </div>
-        <div className={`rounded-xl border p-4 ${lowStockCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
+        <div className={`rounded border p-3 ${lowStockCount > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'}`}>
           <p className="text-xs text-gray-500 mb-1">Low Stock</p>
-          <p className={`text-xl sm:text-2xl font-bold ${lowStockCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>{lowStockCount}</p>
+          <p className={`text-lg sm:text-xl font-bold ${lowStockCount > 0 ? 'text-red-600' : 'text-gray-900'}`}>{lowStockCount}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5">
-        <div className="flex flex-col sm:flex-row gap-3">
+      <div className="bg-white rounded border border-gray-200 p-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by name, SKU or category…"
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden text-sm self-start">
+          <div className="flex rounded border border-gray-300 overflow-hidden text-sm self-start">
             {(['all', 'low', 'ok'] as const).map(s => (
               <button key={s} onClick={() => setStatusFilter(s)}
-                className={`px-3 py-2 font-medium transition-colors ${statusFilter === s ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-3 py-2 font-medium transition-colors ${statusFilter === s ? 'bg-slate-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                 {s === 'all' ? 'All' : s === 'low' ? 'Low Stock' : 'In Stock'}
               </button>
             ))}
           </div>
           {(search || statusFilter !== 'all') && (
             <button onClick={() => { setSearch(''); setStatusFilter('all'); }}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors self-start">
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors self-start">
               <FaTimes className="text-xs" /> Clear
             </button>
           )}
@@ -177,8 +177,8 @@ export const Inventory = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {error && <div className="p-4 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
+      <div className="bg-white rounded border border-gray-200 overflow-hidden">
+        {error && <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[500px]">
             <thead>
@@ -239,11 +239,11 @@ export const Inventory = () => {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => setRestockItem(item)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Restock" aria-label="Restock">
+                            className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors" title="Restock" aria-label="Restock">
                             <FaArrowUp className="text-sm" />
                           </button>
                           <button onClick={() => setThresholdItem(item)}
-                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Set threshold" aria-label="Set threshold">
+                            className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" title="Set threshold" aria-label="Set threshold">
                             <FaCog className="text-sm" />
                           </button>
                         </div>
@@ -258,7 +258,7 @@ export const Inventory = () => {
       </div>
 
       {!isAdmin && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded-xl px-4 py-3">
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded px-4 py-3">
           <FaLock className="text-gray-400 flex-shrink-0" />
           Inventory is view-only for Cashiers. Only Admins can restock or change thresholds.
         </div>

@@ -5,9 +5,7 @@ import {
 } from 'react-icons/fa';
 import { salesApi, type Sale } from '../api/sales';
 import { reportsApi, type DashboardStats } from '../api/reports';
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat('ne-NP', { style: 'currency', currency: 'NPR', maximumFractionDigits: 0 }).format(n);
+import { formatCurrency } from '../lib/format';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -40,11 +38,11 @@ function BarChart({ data }: { data: { month: string; value: number }[] }) {
           return (
             <g key={d.month}>
               <rect x={x} y={H - barH} width={barW} height={barH} rx={3}
-                fill={d.value > 0 ? '#6366f1' : '#e5e7eb'} />
+                fill={d.value > 0 ? '#1e293b' : '#e5e7eb'} />
               <text x={x + barW / 2} y={H + 16} textAnchor="middle" fill="#9ca3af" fontSize={10}>
                 {d.month}
               </text>
-              {d.value > 0 && <title>{d.month}: {fmt(d.value)}</title>}
+              {d.value > 0 && <title>{d.month}: {formatCurrency(d.value)}</title>}
             </g>
           );
         })}
@@ -58,13 +56,13 @@ function StatCard({ label, value, icon: Icon, color, sub }: {
   label: string; value: string | number; icon: React.ElementType; color: string; sub?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex items-start gap-4">
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>
+    <div className="bg-white rounded border border-gray-200 p-3 sm:p-4 flex items-start gap-3">
+      <div className={`w-10 h-10 rounded flex items-center justify-center flex-shrink-0 ${color}`}>
         <Icon className="text-white text-base" />
       </div>
       <div className="min-w-0">
         <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-        <p className="text-lg sm:text-xl font-bold text-gray-900 truncate">{value}</p>
+        <p className="text-base sm:text-lg font-bold text-gray-900 truncate">{value}</p>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
     </div>
@@ -97,7 +95,7 @@ function PaymentBreakdown({ sales }: { sales: Sale[] }) {
         <div key={method}>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-700 font-medium">{labels[method] ?? method}</span>
-            <span className="text-gray-500">{fmt(amount)} ({((amount / total) * 100).toFixed(1)}%)</span>
+            <span className="text-gray-500">{formatCurrency(amount)} ({((amount / total) * 100).toFixed(1)}%)</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2">
             <div className={`h-2 rounded-full ${colors[method] ?? 'bg-gray-400'}`}
@@ -144,29 +142,29 @@ export const Reports = () => {
   return (
     <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+          <h1 className="text-xl font-bold text-gray-900">Reports & Analytics</h1>
           <p className="text-sm text-gray-500 mt-0.5">Business performance overview</p>
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
           <button onClick={() => exportCSV(sales)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
             <FaDownload className="text-xs" /> Export CSV
           </button>
           <button onClick={load}
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
             <FaSyncAlt className={`text-xs ${loading ? 'animate-spin' : ''}`} /> Refresh
           </button>
         </div>
       </div>
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
+      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{error}</div>}
 
       {/* Stats from API */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <StatCard label="Total Products"   value={stats.totalProducts}   icon={FaBoxes}             color="bg-indigo-500" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+          <StatCard label="Total Products"   value={stats.totalProducts}   icon={FaBoxes}             color="bg-slate-800" />
           <StatCard label="Total Customers"  value={stats.totalCustomers}  icon={FaUsers}             color="bg-blue-500" />
           <StatCard label="Total Suppliers"  value={stats.totalSuppliers}  icon={FaTruck}             color="bg-teal-500" />
           <StatCard label="Low Stock"        value={stats.lowStockProducts} icon={FaExclamationTriangle}
@@ -176,37 +174,37 @@ export const Reports = () => {
       )}
 
       {/* Sales summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
         <StatCard label="Transactions"    value={sales.length}        icon={FaShoppingCart} color="bg-violet-500" />
-        <StatCard label="Total Revenue"   value={fmt(totalRevenue)}   icon={FaMoneyBillWave} color="bg-green-500" />
-        <StatCard label="Total Tax"       value={fmt(totalTax)}       icon={FaChartLine}    color="bg-orange-500" />
-        <StatCard label="Avg Transaction" value={fmt(avgSale)}        icon={FaChartBar}     color="bg-pink-500" />
+        <StatCard label="Total Revenue"   value={formatCurrency(totalRevenue)}   icon={FaMoneyBillWave} color="bg-green-500" />
+        <StatCard label="Total Tax"       value={formatCurrency(totalTax)}       icon={FaChartLine}    color="bg-orange-500" />
+        <StatCard label="Avg Transaction" value={formatCurrency(avgSale)}        icon={FaChartBar}     color="bg-pink-500" />
       </div>
 
       {/* Chart + Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-5">
+        <div className="lg:col-span-2 bg-white rounded border border-gray-200 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h2 className="font-semibold text-gray-900">Monthly Performance ({new Date().getFullYear()})</h2>
-            <div className="flex rounded-lg border border-gray-300 overflow-hidden text-xs self-start">
+            <div className="flex rounded border border-gray-300 overflow-hidden text-xs self-start">
               <button onClick={() => setChartType('revenue')}
-                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'revenue' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'revenue' ? 'bg-slate-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                 Revenue
               </button>
               <button onClick={() => setChartType('count')}
-                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'count' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'count' ? 'bg-slate-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
                 Transactions
               </button>
             </div>
           </div>
           {loading ? (
             <div className="h-48 flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-slate-800 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : <BarChart data={chartData} />}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded border border-gray-200 p-4">
           <h2 className="font-semibold text-gray-900 mb-4">Payment Methods</h2>
           {loading ? (
             <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-8 bg-gray-200 rounded animate-pulse" />)}</div>
@@ -215,7 +213,7 @@ export const Reports = () => {
       </div>
 
       {/* Recent transactions */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white rounded border border-gray-200 p-4">
         <h2 className="font-semibold text-gray-900 mb-4">Recent Transactions</h2>
         {loading ? (
           <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />)}</div>
@@ -244,7 +242,7 @@ export const Reports = () => {
                     <td className="py-2.5 px-3 text-gray-500 hidden sm:table-cell text-xs">{new Date(s.createdAt).toLocaleDateString()}</td>
                     <td className="py-2.5 px-3 text-gray-700">{s.cashierName}</td>
                     <td className="py-2.5 px-3 text-center text-gray-600">{s.items.length}</td>
-                    <td className="py-2.5 px-3 text-right font-medium text-gray-900">{fmt(s.netAmount)}</td>
+                    <td className="py-2.5 px-3 text-right font-medium text-gray-900">{formatCurrency(s.netAmount)}</td>
                     <td className="py-2.5 px-3 text-center hidden sm:table-cell text-xs text-gray-500">{s.paymentMethod}</td>
                   </tr>
                 ))}
