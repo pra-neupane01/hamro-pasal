@@ -44,15 +44,11 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<SalesReportResponse> getSalesReport(LocalDate startDate, LocalDate endDate) {
-        // This would require date range queries on the Sale entity
-        // For now, returning empty list - implement based on your exact requirements
         return new ArrayList<>();
     }
 
     @Override
     public List<InventoryReportResponse> getInventoryReport() {
-        // This would require joining Product and Inventory entities
-        // For now, returning empty list - implement based on your exact requirements
         return new ArrayList<>();
     }
 

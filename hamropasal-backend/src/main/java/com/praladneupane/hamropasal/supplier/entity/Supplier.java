@@ -1,8 +1,13 @@
 package com.praladneupane.hamropasal.supplier.entity;
 
 import com.praladneupane.hamropasal.common.model.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -14,32 +19,15 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class Supplier extends BaseEntity {
 
-    @Column(name = "company_name", nullable = false)
+    @Column(name = "company_name")
     private String companyName;
 
-    @Column(name = "contact_person", nullable = false)
-    private String contactPerson;
-
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     private String email;
 
-    @Column(name = "phone", nullable = false, unique = true)
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "address")
-    private String address;
-
-    @Column(name = "city")
-    private String city;
-
-    @Column(name = "payment_terms")
-    private String paymentTerms;
-
-    @Builder.Default
-    @Column(name = "total_supplied")
-    private Double totalSupplied = 0.0;
-
-    @Builder.Default
     @Column(name = "active")
     private boolean active = true;
 }
