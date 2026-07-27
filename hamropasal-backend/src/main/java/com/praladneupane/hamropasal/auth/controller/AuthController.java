@@ -1,11 +1,13 @@
 package com.praladneupane.hamropasal.auth.controller;
 
 import com.praladneupane.hamropasal.auth.dto.request.UserLoginRequest;
+import com.praladneupane.hamropasal.auth.dto.request.UserRegisterRequest;
 import com.praladneupane.hamropasal.auth.dto.response.UserLoginResponse;
 import com.praladneupane.hamropasal.auth.service.AuthService;
 import com.praladneupane.hamropasal.common.dto.response.APIResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,5 +32,17 @@ public class AuthController {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<APIResponse<UserLoginResponse>> registerUser(@RequestBody @Valid UserRegisterRequest request){
+        UserLoginResponse registerResponse = authService.register(request);
+        APIResponse<UserLoginResponse> apiResponse = APIResponse.<UserLoginResponse>builder()
+                .data(registerResponse)
+                .message("User registered successfully")
+                .success(true)
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 }

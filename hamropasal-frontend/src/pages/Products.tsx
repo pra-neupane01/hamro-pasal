@@ -1,422 +1,401 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  FaPlus,
-  FaTrash,
-  FaEdit,
-  FaFilter,
-  FaSearch,
-  FaSort,
-  FaEllipsisV
+  FaSearch, FaPlus, FaEdit, FaTrash, FaTimes, FaChevronLeft, FaChevronRight,
+  FaBoxOpen, FaExclamationTriangle, FaLock,
 } from 'react-icons/fa';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { productsApi, type Product, type Category } from '../api/products';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../lib/format';
 
-interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  category: string;
-  price: number;
-  stock: number;
-  minStock: number;
-  status: string;
-  image: string;
-  unit?: string;
-}
+const stockBadge = (qty: number) => {
+  if (qty === 0) return { label: 'Out of Stock', cls: 'bg-red-100 text-red-700' };
+  if (qty <= 10)  return { label: 'Low Stock',    cls: 'bg-yellow-100 text-yellow-700' };
+  return { label: 'In Stock', cls: 'bg-green-100 text-green-700' };
+};
 
-export const Products = () => {
-  const mockProducts: Product[] = [
-    {
-      id: 1,
-      name: 'Basmati Rice (5kg)',
-      sku: 'RICE-001',
-      category: 'Groceries',
-      price: 450.00,
-      stock: 25,
-      minStock: 10,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&h=100&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Coca-Cola 500ml',
-      sku: 'DRINK-005',
-      category: 'Beverages',
-      price: 50.00,
-      stock: 120,
-      minStock: 20,
-      status: 'active',
-      image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&h=100&fit=crop'
+// ── Product Modal ─────────────────────────────────────────────────────────────
+function ProductModal({ mode, product, categories, onClose, onSaved }: {
+  mode: 'add' | 'edit'; product?: Product | null; categories: Category[];
+  onClose: () => void; onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    name:               product?.productName ?? '',
+    description:        product?.description ?? '',
+    sku:                product?.sku ?? '',
+    barcode:            product?.barcode ?? '',
+    price:              product?.price?.toString() ?? '',
+    categoryId:         categories.find(c => c.name === product?.categoryName)?.id?.toString() ?? '',
+    quantity:           product?.quantity?.toString() ?? '',
+    warehouseLocation:  '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState('');
+
+  const set = (k: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!form.name || !form.sku || !form.barcode || !form.price || !form.categoryId) {
+      setError('All required fields must be filled.');
+      return;
     }
-  ];
-
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Initialize products on mount
-  // In a real app, this would be fetched from an API
-  // For now, we'll use mock data
-  // useEffect(() => {
-  //   fetchProducts();
-  // }, []);
-
-  // const fetchProducts = async () => {
-  //   setLoading(true);
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 800));
-  //     setProducts(mockProducts);
-  //   } catch (error) {
-  //     console.error('Error fetching products:', error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Initialize with mock data
-  // useEffect(() => {
-  //   setProducts(mockProducts);
-  // }, []);
-
-  // For now, we'll set products directly
-  // In a real app, you'd fetch from API
-  // setProducts(mockProducts);
-
-  // Filter and sort products
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
-      const matchesStatus = !selectedStatus || product.status === selectedStatus;
-      return matchesSearch && matchesCategory && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
-      if (sortBy === 'price-asc') return a.price - b.price;
-      if (sortBy === 'price-desc') return b.price - a.price;
-      if (sortBy === 'stock-asc') return a.stock - b.stock;
-      if (sortBy === 'stock-desc') return b.stock - a.stock;
-      return 0;
-    });
-
-  // Handle delete confirmation
-  const handleDelete = (product: Product) => {
-    setProductToDelete(product);
-    setShowDeleteModal(true);
+    setSaving(true);
+    try {
+      if (mode === 'add') {
+        await productsApi.create({
+          name: form.name, description: form.description, sku: form.sku,
+          barcode: form.barcode, price: parseFloat(form.price),
+          categoryId: parseInt(form.categoryId),
+          quantity: parseInt(form.quantity) || 0,
+          warehouseLocation: form.warehouseLocation,
+        });
+      } else {
+        await productsApi.update({
+          productId: product!.productId, name: form.name, description: form.description,
+          sku: form.sku, barcode: form.barcode, price: parseFloat(form.price),
+        });
+      }
+      onSaved();
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to save product.');
+    } finally {
+      setSaving(false);
+    }
   };
-
-  const confirmDelete = () => {
-    if (!productToDelete) return;
-    // In a real app, this would call an API to delete the product
-    setProducts(products.filter(p => p.id !== productToDelete.id));
-    setShowDeleteModal(false);
-    // Show success message
-    alert(`${productToDelete.name} has been deleted successfully!`);
-    setProductToDelete(null);
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setProductToDelete(null);
-  };
-
-  // Categories for filter
-  const categories = [...new Set(products.map(p => p.category))];
-
-  // Status options
-  const statusOptions = [
-    { value: 'active', label: 'Active' },
-    { value: 'low-stock', label: 'Low Stock' },
-    { value: 'out-of-stock', label: 'Out of Stock' },
-    { value: 'discontinued', label: 'Discontinued' }
-  ];
-
-  // Sort options
-  const sortOptions = [
-    { value: 'name-asc', label: 'Name: A to Z' },
-    { value: 'name-desc', label: 'Name: Z to A' },
-    { value: 'price-asc', label: 'Price: Low to High' },
-    { value: 'price-desc', label: 'Price: High to Low' },
-    { value: 'stock-asc', label: 'Stock: Low to High' },
-    { value: 'stock-desc', label: 'Stock: High to Low' }
-  ];
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {/* Loading state */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Products</h2>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-              <FaPlus /> Add Product
-            </button>
-          </div>
-          <div className="h-96 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <span className="ml-2 text-gray-500">Loading products...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Products</h2>
-          <button
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center space-x-2"
-            onClick={() => {/* Navigate to add product form */}}
-          >
-            <FaPlus />
-            Add Product
+    <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-full max-w-lg my-4 sm:my-0" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">{mode === 'add' ? 'Add Product' : 'Edit Product'}</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100" aria-label="Close">
+            <FaTimes />
           </button>
         </div>
-
-        {/* Search and filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by name or SKU..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              />
+        <form onSubmit={submit} className="px-4 py-4 space-y-3">
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">{error}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+              <input value={form.name} onChange={set('name')} required
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="Product name" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SKU <span className="text-red-500">*</span></label>
+              <input value={form.sku} onChange={set('sku')} required
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="PROD-001" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Barcode <span className="text-red-500">*</span></label>
+              <input value={form.barcode} onChange={set('barcode')} required
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="1234567890123" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Price (NPR) <span className="text-red-500">*</span></label>
+              <input type="number" min="0.01" step="0.01" value={form.price} onChange={set('price')} required
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="0.00" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+              <select value={form.categoryId} onChange={set('categoryId')} required
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 bg-white">
+                <option value="">Select category</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            {mode === 'add' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Initial Quantity</label>
+                  <input type="number" min="0" value={form.quantity} onChange={set('quantity')}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    placeholder="0" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Warehouse Location</label>
+                  <input value={form.warehouseLocation} onChange={set('warehouseLocation')}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
+                    placeholder="e.g. Aisle B-3" />
+                </div>
+              </>
+            )}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea value={form.description} onChange={set('description')} rows={3}
+                className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none"
+                placeholder="Optional description" />
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded transition-colors disabled:opacity-50">
+              {saving ? 'Saving…' : mode === 'add' ? 'Add Product' : 'Save Changes'}
+            </button>
           </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
+// ── Delete confirm ────────────────────────────────────────────────────────────
+function DeleteConfirm({ product, onClose, onDeleted }: {
+  product: Product; onClose: () => void; onDeleted: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+  const confirm = async () => {
+    setLoading(true);
+    try { await productsApi.delete(product.productId); onDeleted(); }
+    catch (err: any) { setError(err.message ?? 'Delete failed.'); setLoading(false); }
+  };
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <FaExclamationTriangle className="text-red-600" />
+          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Status</option>
-              {statusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <h3 className="font-semibold text-gray-900">Delete Product</h3>
+            <p className="text-sm text-gray-500">This action cannot be undone.</p>
           </div>
         </div>
+        <p className="text-sm text-gray-700 mb-4">Delete <strong>{product.productName}</strong>?</p>
+        {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded">Cancel</button>
+          <button onClick={confirm} disabled={loading}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded disabled:opacity-50">
+            {loading ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-500">
-            Showing {filteredProducts.length} of {products.length} products
+// ── Main ──────────────────────────────────────────────────────────────────────
+export const Products = () => {
+  const { isAdmin } = useAuth();
+  const [products, setProducts]       = useState<Product[]>([]);
+  const [categories, setCategories]   = useState<Category[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState('');
+  const [search, setSearch]           = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [minPrice, setMinPrice]       = useState('');
+  const [maxPrice, setMaxPrice]       = useState('');
+  const [pageNo, setPageNo]           = useState(0);
+  const pageSize                      = 10;
+  const [totalPages, setTotalPages]   = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [modal, setModal]             = useState<null | 'add' | 'edit'>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await productsApi.getAll({
+        productName: search || undefined, categoryName: categoryFilter || undefined,
+        minPrice: minPrice || undefined, maxPrice: maxPrice || undefined,
+        pageNo, pageSize,
+      });
+      const paged = res.data;
+      setProducts(paged.content);
+      setTotalPages(paged.totalPages);
+      setTotalElements(paged.totalElements);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to load products.');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, categoryFilter, minPrice, maxPrice, pageNo, pageSize]);
+
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => { productsApi.getCategories().then(r => setCategories(r.data)).catch(() => {}); }, []);
+  useEffect(() => { setPageNo(0); }, [search, categoryFilter, minPrice, maxPrice]);
+
+  const closeModal = () => { setModal(null); setEditProduct(null); };
+  const afterSave  = () => { closeModal(); load(); };
+  const afterDelete = () => { setDeleteTarget(null); load(); };
+
+  return (
+    <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Products</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {totalElements > 0 ? `${totalElements} product${totalElements !== 1 ? 's' : ''}` : 'Manage your catalog'}
+          </p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setModal('add')}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 active:bg-black text-white text-sm font-medium rounded transition-colors shadow-sm self-start sm:self-auto"
+          >
+            <FaPlus className="text-xs" /> Add Product
+          </button>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded border border-gray-200 p-3 mb-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+          <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name, SKU, barcode…"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
-          <div className="flex items-center space-x-3">
-            <label className="text-sm font-medium text-gray-700">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="ml-2 pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[140px]">
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <input type="number" placeholder="Min price" value={minPrice} onChange={e => setMinPrice(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-slate-500" />
+            <input type="number" placeholder="Max price" value={maxPrice} onChange={e => setMaxPrice(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
+          {(search || categoryFilter || minPrice || maxPrice) && (
+            <button onClick={() => { setSearch(''); setCategoryFilter(''); setMinPrice(''); setMaxPrice(''); }}
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors">
+              <FaTimes className="text-xs" /> Clear
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
+      {/* Table */}
+      <div className="bg-white rounded border border-gray-200 overflow-hidden">
+        {error && <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full text-sm min-w-[540px]">
             <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Product Image
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Product Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Product</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">SKU</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Category</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">Price</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Stock</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Status</th>
+                {isAdmin && <th className="text-center px-4 py-3 font-semibold text-gray-600">Actions</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-800">{product.name}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.sku}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="px-2 py-1 text-xs rounded-full bg-gray-100">
-                          {product.category}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">Rs. {product.price.toFixed(2)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                          product.stock <= product.minStock ? 'bg-red-100' : 'bg-green-100'
-                        }`}>
-                          {product.stock}
-                        </div>
-                        <span className="text-sm text-gray-600">{product.stock} {product.unit || 'pcs'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`${getStatusBadgeClass(product.status)} px-3 py-1 text-xs rounded-full`}>
-                        {getStatusLabel(product.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => {/* Edit product */}}
-                        className="text-indigo-600 hover:text-indigo-800"
-                        title="Edit"
-                      >
-                        <FaEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Delete"
-                      >
-                        <FaTrash className="h-4 w-4" />
-                      </button>
-                    </td>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100">
+                    {Array.from({ length: isAdmin ? 7 : 6 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-4 bg-gray-200 rounded animate-pulse" /></td>
+                    ))}
                   </tr>
                 ))
-              ) : (
+              ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                    No products found matching your criteria.
+                  <td colSpan={isAdmin ? 7 : 6} className="py-16 text-center">
+                    <FaBoxOpen className="mx-auto text-4xl text-gray-300 mb-3" />
+                    <p className="text-gray-500 font-medium">No products found</p>
+                    <p className="text-gray-400 text-xs mt-1">Try adjusting your filters or add a new product.</p>
                   </td>
                 </tr>
+              ) : (
+                products.map(p => {
+                  const badge = stockBadge(p.quantity);
+                  return (
+                    <tr key={p.productId} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-900">{p.productName}</div>
+                        {p.description && <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[200px]">{p.description}</div>}
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell text-gray-500 font-mono text-xs">{p.sku}</td>
+                      <td className="px-4 py-3 hidden md:table-cell text-gray-600">{p.categoryName}</td>
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(p.price)}</td>
+                      <td className="px-4 py-3 text-center text-gray-700">{p.quantity}</td>
+                      <td className="px-4 py-3 text-center hidden sm:table-cell">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
+                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => { setEditProduct(p); setModal('edit'); }}
+                              className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" aria-label="Edit">
+                              <FaEdit className="text-sm" />
+                            </button>
+                            <button onClick={() => setDeleteTarget(p)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded transition-colors" aria-label="Delete">
+                              <FaTrash className="text-sm" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination would go here */}
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <span className="text-sm text-gray-500">
-            Showing 1-{filteredProducts.length > 0 ? filteredProducts.length : 0} of {products.length} products
-          </span>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              1
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              3
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 ml-2">
-              Next
-            </button>
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <span className="text-sm text-gray-500">Page {pageNo + 1} of {totalPages}</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPageNo(p => p - 1)} disabled={pageNo === 0}
+                className="p-2 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Previous">
+                <FaChevronLeft className="text-xs" />
+              </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pg = Math.max(0, Math.min(pageNo - 2, totalPages - 5)) + i;
+                return (
+                  <button key={pg} onClick={() => setPageNo(pg)}
+                    className={`w-8 h-8 rounded text-sm font-medium transition-colors ${
+                      pg === pageNo ? 'bg-slate-800 text-white' : 'text-gray-600 hover:bg-gray-200'
+                    }`}>
+                    {pg + 1}
+                  </button>
+                );
+              })}
+              <button onClick={() => setPageNo(p => p + 1)} disabled={pageNo >= totalPages - 1}
+                className="p-2 rounded text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" aria-label="Next">
+                <FaChevronRight className="text-xs" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Cashier read-only notice */}
+      {!isAdmin && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded px-4 py-3">
+          <FaLock className="text-gray-400 flex-shrink-0" />
+          Products are read-only for Cashiers. Contact an Admin to make changes.
+        </div>
+      )}
+
+      {(modal === 'add' || modal === 'edit') && (
+        <ProductModal mode={modal} product={modal === 'edit' ? editProduct : null}
+          categories={categories} onClose={closeModal} onSaved={afterSave} />
+      )}
+      {deleteTarget && (
+        <DeleteConfirm product={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={afterDelete} />
+      )}
     </div>
   );
-};
-
-// Helper function to get status badge class
-const getStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800';
-    case 'low-stock':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'out-of-stock':
-      return 'bg-red-100 text-red-800';
-    case 'discontinued':
-      return 'bg-gray-100 text-gray-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-// Helper function to get status label
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'Active';
-    case 'low-stock':
-      return 'Low Stock';
-    case 'out-of-stock':
-      return 'Out of Stock';
-    case 'discontinued':
-      return 'Discontinued';
-    default:
-      return 'Unknown';
-  }
 };

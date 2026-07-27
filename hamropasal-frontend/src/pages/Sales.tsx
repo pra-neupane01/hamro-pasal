@@ -1,538 +1,420 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  FaChartLine,
-  FaCalendarAlt,
-  FaFileInvoice,
-  FaUser,
-  FaFilter,
-  FaSearch,
-  FaPlus,
-  FaEye,
-  FaPrint
+  FaSearch, FaPlus, FaTimes, FaReceipt, FaPrint,
+  FaDownload, FaChartLine, FaChevronDown, FaChevronUp,
 } from 'react-icons/fa';
-import { FaCalendarCheck, FaFileInvoiceDollar } from 'react-icons/fa6';
+import { salesApi, type Sale, type PaymentMethod } from '../api/sales';
+import { productsApi, type Product } from '../api/products';
+import { formatCurrency } from '../lib/format';
 
-interface Sale {
-  id: string;
-  date: string;
-  customer: string;
-  items: number;
-  total: number;
-  payment: string;
-  status: string;
-  method: string;
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleString('en-NP', { dateStyle: 'medium', timeStyle: 'short' });
+
+const paymentLabel: Record<PaymentMethod, string> = { CASH: 'Cash', ESEWA: 'eSewa', BANKING: 'Banking' };
+const paymentColors: Record<PaymentMethod, string> = {
+  CASH: 'bg-green-100 text-green-700', ESEWA: 'bg-purple-100 text-purple-700', BANKING: 'bg-blue-100 text-blue-700',
+};
+
+function exportCSV(sales: Sale[]) {
+  const rows = [
+    ['ID', 'Date', 'Cashier', 'Items', 'Total', 'Tax', 'Net', 'Payment'],
+    ...sales.map(s => [s.id, fmtDate(s.createdAt), s.cashierName, s.items.length,
+      s.totalAmount.toFixed(2), s.taxAmount.toFixed(2), s.netAmount.toFixed(2), s.paymentMethod]),
+  ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `sales-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
 }
 
-export const Sales = () => {
-  const mockSales: Sale[] = [
-    {
-      id: 'ORD-7892',
-      date: '2024-01-15',
-      customer: 'John Doe',
-      items: 3,
-      total: 89.99,
-      payment: 'completed',
-      status: 'delivered',
-      method: 'Credit Card'
-    },
-    {
-      id: 'ORD-7891',
-      date: '2024-01-15',
-      customer: 'Jane Smith',
-      items: 1,
-      total: 45.50,
-      payment: 'pending',
-      status: 'processing',
-      method: 'Cash'
-    },
-    {
-      id: 'ORD-7890',
-      date: '2024-01-14',
-      customer: 'Bob Wilson',
-      items: 2,
-      total: 120.00,
-      payment: 'completed',
-      status: 'shipped',
-      method: 'Bank Transfer'
-    },
-    {
-      id: 'ORD-7889',
-      date: '2024-01-14',
-      customer: 'Alice Brown',
-      items: 4,
-      total: 200.75,
-      payment: 'completed',
-      status: 'pending',
-      method: 'Esewa'
-    },
-    {
-      id: 'ORD-7888',
-      date: '2024-01-13',
-      customer: 'Charlie Davis',
-      items: 1,
-      total: 67.25,
-      payment: 'completed',
-      status: 'delivered',
-      method: 'Cash'
-    },
-    {
-      id: 'ORD-7887',
-      date: '2024-01-12',
-      customer: 'Eva Patel',
-      items: 5,
-      total: 320.00,
-      payment: 'refunded',
-      status: 'returned',
-      method: 'Credit Card'
-    },
-    {
-      id: 'ORD-7886',
-      date: '2024-01-11',
-      customer: 'Frank Maurice',
-      items: 2,
-      total: 95.50,
-      payment: 'completed',
-      status: 'delivered',
-      method: 'Khalti'
-    }
-  ];
-
-  const [sales, setSales] = useState<Sale[]>(mockSales);
-  const [dateRange, setDateRange] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('');
-  const [orderStatus, setOrderStatus] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('date-desc');
-  const [loading, setLoading] = useState(false);
-
-  // Filter and sort sales
-  const filteredSales = sales
-    .filter(sale => {
-      const matchesSearch = sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           sale.customer.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesDate = !dateRange || (sale.date >= dateRange.split(' to ')[0] && sale.date <= dateRange.split(' to ')[1]);
-      const matchesPayment = !paymentStatus || sale.payment === paymentStatus;
-      const matchesStatus = !orderStatus || sale.status === orderStatus;
-      return matchesSearch && matchesDate && matchesPayment && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date-asc') return new Date(a.date).getTime() - new Date(b.date).getTime();
-      if (sortBy === 'date-desc') return new Date(b.date).getTime() - new Date(a.date).getTime();
-      if (sortBy === 'amount-asc') return a.total - b.total;
-      if (sortBy === 'amount-desc') return b.total - a.total;
-      return 0;
-    });
-
-  // Date ranges for quick selection
-  const dateRanges = [
-    { label: 'Today', value: 'today' },
-    { label: 'Yesterday', value: 'yesterday' },
-    { label: 'Last 7 Days', value: 'last7days' },
-    { label: 'This Month', value: 'thismonth' },
-    { label: 'Last Month', value: 'lastmonth' },
-    { label: 'Custom Range', value: 'custom' }
-  ];
-
-  // Payment status options
-  const paymentStatusOptions = [
-    { value: 'completed', label: 'Paid' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'refunded', label: 'Refunded' }
-  ];
-
-  // Order status options
-  const orderStatusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'processing', label: 'Processing' },
-    { value: 'shipped', label: 'Shipped' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'returned', label: 'Returned' }
-  ];
-
-  // Sort options
-  const sortOptions = [
-    { value: 'date-desc', label: 'Date: Newest First' },
-    { value: 'date-asc', label: 'Date: Oldest First' },
-    { value: 'amount-desc', label: 'Amount: High to Low' },
-    { value: 'amount-asc', label: 'Amount: Low to High' }
-  ];
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {/* Loading state */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Sales Overview</h2>
-            <div className="flex space-x-3">
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                <FaPlus /> New Sale
-              </button>
-              <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                <FaFileInvoice /> Export Sales
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-blue-600">Total Sales</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">$12,450</p>
-              <p className="text-sm text-green-600 mt-1">↑ 12% vs last month</p>
-            </div>
-            <div className="bg-green-50 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-green-600">Orders Today</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">42</p>
-              <p className="text-sm text-green-600 mt-1">↑ 8% vs yesterday</p>
-            </div>
-            <div className="bg-purple-50 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-purple-600">Average Order</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">$45.20</p>
-              <p className="text-sm text-green-600 mt-1">↑ 5% vs last month</p>
-            </div>
-          </div>
-          <div className="h-96 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <span className="ml-2 text-gray-500">Loading sales data...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+// ── Receipt ───────────────────────────────────────────────────────────────────
+function ReceiptModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const print = () => {
+    const content = receiptRef.current?.innerHTML ?? '';
+    const win = window.open('', '_blank', 'width=400,height=600');
+    if (!win) return;
+    win.document.write(`<html><head><title>Receipt</title>
+      <style>body{font-family:monospace;font-size:12px;padding:16px}
+      table{width:100%}td{padding:2px 4px}hr{border:1px dashed #ccc}</style>
+      </head><body>${content}</body></html>`);
+    win.document.close(); win.print();
+  };
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Sales</h2>
-          <div className="flex space-x-3">
-            <button
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              onClick={() => {/* Navigate to new sale form */}}
-            >
-              <FaPlus />
-              New Sale
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              onClick={() => {/* Export functionality */}}
-            >
-              <FaFileInvoice />
-              Export
-            </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <h3 className="font-semibold text-gray-900">Receipt #{sale.id}</h3>
+          <div className="flex gap-1">
+            <button onClick={print} className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" aria-label="Print"><FaPrint /></button>
+            <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded transition-colors" aria-label="Close"><FaTimes /></button>
           </div>
         </div>
-
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="bg-blue-50 rounded-xl p-4">
-            <h3 className="text-sm font-medium text-blue-600">Total Sales</h3>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
-              ${sales.reduce((sum, sale) => sum + sale.total, 0).toFixed(2)}
-            </p>
-            <p className="text-sm text-green-600 mt-1">
-              ↑ 12% vs last month
-            </p>
+        <div ref={receiptRef} className="p-5 font-mono text-xs space-y-3">
+          <div className="text-center">
+            <p className="font-bold text-base">Hamropasal</p>
+            <p className="text-gray-500">Receipt #{sale.id}</p>
+            <p className="text-gray-500">{fmtDate(sale.createdAt)}</p>
+            <p className="text-gray-500">Cashier: {sale.cashierName}</p>
           </div>
-          <div className="bg-green-50 rounded-xl p-4">
-            <h3 className="text-sm font-medium text-green-600">Orders Today</h3>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
-              {sales.filter(sale => {
-                const today = new Date().toISOString().split('T')[0];
-                return sale.date === today;
-              }).length}
-            </p>
-            <p className="text-sm text-green-600 mt-1">
-              ↑ 8% vs yesterday
-            </p>
-          </div>
-          <div className="bg-purple-50 rounded-xl p-4">
-            <h3 className="text-sm font-medium text-purple-600">Average Order</h3>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
-              ${sales.length > 0 ? (sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length).toFixed(2) : '0.00'}
-            </p>
-            <p className="text-sm text-green-600 mt-1">
-              ↑ 5% vs last month
-            </p>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-            <div className="relative">
-              <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              >
-                <option value="">Select Date Range</option>
-                {dateRanges.map(range => (
-                  <option key={range.value} value={range.value}>
-                    {range.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-            <select
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Payment Status</option>
-              {paymentStatusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Order Status</label>
-            <select
-              value={orderStatus}
-              onChange={(e) => setOrderStatus(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              <option value="">All Order Status</option>
-              {orderStatusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Sales</label>
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by order ID or customer..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-sm text-gray-500">
-            Showing {filteredSales.length} of {sales.length} sales
-          </div>
-          <div className="flex items-center space-x-3">
-            <label className="text-sm font-medium text-gray-700">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="ml-2 pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Sales Table */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Items
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredSales.length > 0 ? (
-                filteredSales.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{sale.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {new Date(sale.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{sale.customer}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{sale.items}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">$ {sale.total.toFixed(2)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`${getPaymentStatusClass(sale.payment)} px-3 py-1 text-xs rounded-full`}>
-                        {getPaymentStatusLabel(sale.payment)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`${getOrderStatusClass(sale.status)} px-3 py-1 text-xs rounded-full`}>
-                        {getOrderStatusLabel(sale.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => {/* View sale details */}}
-                        className="text-indigo-600 hover:text-indigo-800"
-                        title="View Details"
-                      >
-                        <FaEye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {/* Print receipt */}}
-                        className="text-green-600 hover:text-green-800"
-                        title="Print Receipt"
-                      >
-                        <FaPrint className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                    No sales found matching your criteria.
-                  </td>
+          <hr className="border-dashed border-gray-300" />
+          <table className="w-full">
+            <thead><tr className="text-gray-500"><th className="text-left">Item</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Sub</th></tr></thead>
+            <tbody>
+              {sale.items.map(item => (
+                <tr key={item.id}>
+                  <td className="py-0.5 max-w-[100px] truncate">{item.productName}</td>
+                  <td className="text-right">{item.quantity}</td>
+                  <td className="text-right">{item.unitPrice.toFixed(2)}</td>
+                  <td className="text-right">{item.subtotal.toFixed(2)}</td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
+          <hr className="border-dashed border-gray-300" />
+          <div className="space-y-1">
+            <div className="flex justify-between"><span>Subtotal</span><span>NPR {sale.totalAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>Tax</span><span>NPR {sale.taxAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between font-bold border-t border-gray-300 pt-1 text-sm"><span>Total</span><span>NPR {sale.netAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between text-gray-500"><span>Payment</span><span>{paymentLabel[sale.paymentMethod]}</span></div>
+          </div>
+          <p className="text-center text-gray-400">Thank you for your purchase!</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── New Sale Modal ────────────────────────────────────────────────────────────
+interface CartLine { product: Product; quantity: number; }
+
+function NewSaleModal({ onClose, onCreated }: { onClose: () => void; onCreated: (s: Sale) => void }) {
+  const [products, setProducts]         = useState<Product[]>([]);
+  const [cart, setCart]                 = useState<CartLine[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
+  const [taxPct, setTaxPct]             = useState('0');
+  const [loading, setLoading]           = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [error, setError]               = useState('');
+
+  useEffect(() => {
+    productsApi.getAll({ pageSize: 100 })
+      .then(r => setProducts(r.data.content))
+      .catch(() => {})
+      .finally(() => setLoadingProducts(false));
+  }, []);
+
+  const filtered = products.filter(p =>
+    p.productName.toLowerCase().includes(productSearch.toLowerCase()) ||
+    p.sku.toLowerCase().includes(productSearch.toLowerCase())
+  );
+
+  const addToCart = (p: Product) =>
+    setCart(prev => {
+      const exists = prev.find(l => l.product.productId === p.productId);
+      if (exists) return prev.map(l => l.product.productId === p.productId ? { ...l, quantity: l.quantity + 1 } : l);
+      return [...prev, { product: p, quantity: 1 }];
+    });
+
+  const updateQty = (id: number, qty: number) => {
+    if (qty < 1) { setCart(prev => prev.filter(l => l.product.productId !== id)); return; }
+    setCart(prev => prev.map(l => l.product.productId === id ? { ...l, quantity: qty } : l));
+  };
+
+  const subtotal = cart.reduce((s, l) => s + l.product.price * l.quantity, 0);
+  const taxAmt   = subtotal * (parseFloat(taxPct) || 0) / 100;
+  const total    = subtotal + taxAmt;
+
+  const submit = async () => {
+    if (cart.length === 0) { setError('Add at least one item'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await salesApi.create({
+        items: cart.map(l => ({ productId: l.product.productId, quantity: l.quantity })),
+        paymentMethod, taxAmount: taxAmt,
+      });
+      onCreated(res.data);
+    } catch (err: any) { setError(err.message ?? 'Failed to create sale'); setLoading(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded shadow-xl w-full max-w-2xl my-4 sm:my-0 flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-gray-900">New Sale</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors" aria-label="Close"><FaTimes /></button>
         </div>
 
-        {/* Pagination would go here */}
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <span className="text-sm text-gray-500">
-            Showing 1-{filteredSales.length > 0 ? filteredSales.length : 0} of {sales.length} sales
-          </span>
-          <div className="flex space-x-2">
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              1
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-              3
-            </button>
-            <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 ml-2">
-              Next
-            </button>
+        <div className="flex flex-col sm:flex-row flex-1 overflow-hidden min-h-0">
+          {/* Product picker */}
+          <div className="sm:w-1/2 border-b sm:border-b-0 sm:border-r border-gray-200 flex flex-col p-3 overflow-hidden max-h-64 sm:max-h-none">
+            <div className="relative mb-3 flex-shrink-0">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
+              <input value={productSearch} onChange={e => setProductSearch(e.target.value)}
+                placeholder="Search products…"
+                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-1">
+              {loadingProducts ? (
+                <div className="py-6 text-center text-gray-400 text-sm">Loading products…</div>
+              ) : filtered.length === 0 ? (
+                <div className="py-6 text-center text-gray-400 text-sm">No products found</div>
+              ) : filtered.map(p => (
+                <button key={p.productId} onClick={() => addToCart(p)}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-slate-50 hover:border-slate-200 transition-colors border border-transparent">
+                  <div className="text-sm font-medium text-gray-900">{p.productName}</div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-0.5">
+                    <span>{p.sku}</span>
+                    <span className="font-medium text-slate-700">{formatCurrency(p.price)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cart */}
+          <div className="sm:w-1/2 flex flex-col p-3 overflow-hidden">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex-shrink-0">Cart ({cart.length} items)</h3>
+            <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+              {cart.length === 0 ? (
+                <div className="py-6 text-center text-gray-400 text-sm">No items added yet</div>
+              ) : cart.map(line => (
+                <div key={line.product.productId} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{line.product.productName}</p>
+                    <p className="text-xs text-gray-500">{formatCurrency(line.product.price)} × {line.quantity} = {formatCurrency(line.product.price * line.quantity)}</p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => updateQty(line.product.productId, line.quantity - 1)}
+                      className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold flex items-center justify-center transition-colors">−</button>
+                    <span className="w-7 text-center text-sm font-medium">{line.quantity}</span>
+                    <button onClick={() => updateQty(line.product.productId, line.quantity + 1)}
+                      className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold flex items-center justify-center transition-colors">+</button>
+                    <button onClick={() => updateQty(line.product.productId, 0)}
+                      className="p-1 text-red-400 hover:text-red-600 transition-colors ml-1"><FaTimes className="text-xs" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary */}
+            <div className="border-t border-gray-200 pt-3 mt-3 space-y-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 whitespace-nowrap">Tax %</label>
+                <input type="number" min="0" max="100" step="0.5" value={taxPct} onChange={e => setTaxPct(e.target.value)}
+                  className="w-16 border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
+                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
+                  className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-500">
+                  <option value="CASH">Cash</option>
+                  <option value="ESEWA">eSewa</option>
+                  <option value="BANKING">Banking</option>
+                </select>
+              </div>
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                <div className="flex justify-between text-gray-500"><span>Tax ({taxPct}%)</span><span>{formatCurrency(taxAmt)}</span></div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-1"><span>Total</span><span>{formatCurrency(total)}</span></div>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button onClick={submit} disabled={loading || cart.length === 0}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-900 active:bg-black text-white text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {loading ? 'Processing…' : `Complete Sale · ${formatCurrency(total)}`}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-// Helper functions for status classes and labels
-const getPaymentStatusClass = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'failed':
-      return 'bg-red-100 text-red-800';
-    case 'refunded':
-      return 'bg-blue-100 text-blue-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+// ── Main Sales page ───────────────────────────────────────────────────────────
+export const Sales = () => {
+  const [sales, setSales]         = useState<Sale[]>([]);
+  const [filtered, setFiltered]   = useState<Sale[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [search, setSearch]       = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
+  const [newSaleOpen, setNewSaleOpen] = useState(false);
 
-const getPaymentStatusLabel = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'Paid';
-    case 'pending':
-      return 'Pending';
-    case 'failed':
-      return 'Failed';
-    case 'refunded':
-      return 'Refunded';
-    default:
-      return 'Unknown';
-  }
-};
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try { const res = await salesApi.getAll(); setSales(res.data); }
+    catch (err: any) { setError(err.message ?? 'Failed to load sales'); }
+    finally { setLoading(false); }
+  }, []);
 
-const getOrderStatusClass = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'processing':
-      return 'bg-blue-100 text-blue-800';
-    case 'shipped':
-      return 'bg-indigo-100 text-indigo-800';
-    case 'delivered':
-      return 'bg-green-100 text-green-800';
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
-    case 'returned':
-      return 'bg-purple-100 text-purple-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+  useEffect(() => { load(); }, [load]);
 
-const getOrderStatusLabel = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return 'Pending';
-    case 'processing':
-      return 'Processing';
-    case 'shipped':
-      return 'Shipped';
-    case 'delivered':
-      return 'Delivered';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'returned':
-      return 'Returned';
-    default:
-      return 'Unknown';
-  }
+  useEffect(() => {
+    let list = [...sales];
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(s => String(s.id).includes(q) || s.cashierName.toLowerCase().includes(q) ||
+        s.items.some(i => i.productName.toLowerCase().includes(q)));
+    }
+    if (paymentFilter) list = list.filter(s => s.paymentMethod === paymentFilter);
+    setFiltered(list);
+  }, [sales, search, paymentFilter]);
+
+  const totalRevenue = filtered.reduce((s, x) => s + x.netAmount, 0);
+  const totalTax     = filtered.reduce((s, x) => s + x.taxAmount, 0);
+
+  const afterSale = (sale: Sale) => { setNewSaleOpen(false); setSales(prev => [sale, ...prev]); setReceiptSale(sale); };
+
+  return (
+    <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Sales</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{filtered.length} transaction{filtered.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <button onClick={() => exportCSV(filtered)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
+            <FaDownload className="text-xs" /> Export CSV
+          </button>
+          <button onClick={() => setNewSaleOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded transition-colors shadow-sm">
+            <FaPlus className="text-xs" /> New Sale
+          </button>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-5">
+        <div className="bg-white rounded border border-gray-200 p-3">
+          <p className="text-xs text-gray-500 mb-1">Transactions</p>
+          <p className="text-lg sm:text-xl font-bold text-gray-900">{filtered.length}</p>
+        </div>
+        <div className="bg-white rounded border border-gray-200 p-3">
+          <p className="text-xs text-gray-500 mb-1">Net Revenue</p>
+          <p className="text-base sm:text-xl font-bold text-gray-900 truncate">{formatCurrency(totalRevenue)}</p>
+        </div>
+        <div className="bg-white rounded border border-gray-200 p-3">
+          <p className="text-xs text-gray-500 mb-1">Total Tax</p>
+          <p className="text-base sm:text-xl font-bold text-gray-900 truncate">{formatCurrency(totalTax)}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded border border-gray-200 p-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by ID, cashier, product…"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-slate-500" />
+          </div>
+          <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 min-w-[160px]">
+            <option value="">All Payments</option>
+            <option value="CASH">Cash</option>
+            <option value="ESEWA">eSewa</option>
+            <option value="BANKING">Banking</option>
+          </select>
+          {(search || paymentFilter) && (
+            <button onClick={() => { setSearch(''); setPaymentFilter(''); }}
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors self-start">
+              <FaTimes className="text-xs" /> Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded border border-gray-200 overflow-hidden">
+        {error && <div className="p-3 bg-red-50 border-b border-red-200 text-red-700 text-sm">{error}</div>}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="w-10 px-4 py-3"></th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">#</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Date</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Cashier</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Items</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-600">Amount</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600 hidden sm:table-cell">Payment</th>
+                <th className="text-center px-4 py-3 font-semibold text-gray-600">Receipt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100">
+                    {Array.from({ length: 8 }).map((_, j) => (
+                      <td key={j} className="px-4 py-3"><div className="h-4 bg-gray-200 rounded animate-pulse" /></td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-16 text-center">
+                    <FaChartLine className="mx-auto text-4xl text-gray-300 mb-3" />
+                    <p className="text-gray-500 font-medium">No sales found</p>
+                    <p className="text-gray-400 text-xs mt-1">Create a new sale to get started.</p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map(sale => (
+                  <>
+                    <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <button onClick={() => setExpandedId(expandedId === sale.id ? null : sale.id)}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors" aria-label="Expand">
+                          {expandedId === sale.id ? <FaChevronUp className="text-xs" /> : <FaChevronDown className="text-xs" />}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-gray-900">#{sale.id}</td>
+                      <td className="px-4 py-3 hidden sm:table-cell text-gray-500 text-xs">{fmtDate(sale.createdAt)}</td>
+                      <td className="px-4 py-3 hidden md:table-cell text-gray-600">{sale.cashierName}</td>
+                      <td className="px-4 py-3 text-center text-gray-700">{sale.items.length}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatCurrency(sale.netAmount)}</td>
+                      <td className="px-4 py-3 text-center hidden sm:table-cell">
+                        <span className={`inline-block px-2 py-0.5 text-xs rounded-full font-medium ${paymentColors[sale.paymentMethod]}`}>
+                          {paymentLabel[sale.paymentMethod]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={() => setReceiptSale(sale)}
+                          className="p-2 text-slate-700 hover:bg-slate-100 rounded transition-colors" aria-label="View receipt">
+                          <FaReceipt className="text-sm" />
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedId === sale.id && (
+                      <tr key={`${sale.id}-exp`} className="border-b border-gray-100 bg-slate-50/30">
+                        <td colSpan={8} className="px-6 sm:px-10 py-3">
+                          <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Items in this sale</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            {sale.items.map(item => (
+                              <div key={item.id} className="text-xs bg-white rounded border border-gray-200 p-2">
+                                <p className="font-medium text-gray-900">{item.productName}</p>
+                                <p className="text-gray-500">{item.quantity} × {formatCurrency(item.unitPrice)} = {formatCurrency(item.subtotal)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {receiptSale && <ReceiptModal sale={receiptSale} onClose={() => setReceiptSale(null)} />}
+      {newSaleOpen  && <NewSaleModal onClose={() => setNewSaleOpen(false)} onCreated={afterSale} />}
+    </div>
+  );
 };
