@@ -4,11 +4,32 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cb64fd03-0b96-4194-84ab-b298badc3d22" name="Changes" comment="" />
+    <list default="true" id="cb64fd03-0b96-4194-84ab-b298badc3d22" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/PROJECTTT.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hamropasal-backend/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hamropasal-frontend/.dockerignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hamropasal-frontend/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/auth/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/auth/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/common/config/SwaggerConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/common/config/SwaggerConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/inventory/repository/InventoryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/inventory/repository/InventoryRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/sale/repository/SaleRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/src/main/java/com/praladneupane/hamropasal/sale/repository/SaleRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/resources/application-dev.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/resources/application-prod.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/hamropasal-backend/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/hamropasal-backend/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/templates/low-stock-alert.html" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="320" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -27,12 +48,32 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "pra-neupane01"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/pra-neupane01/hamro-pasal.git",
+    "accountId": "8e8852c7-9501-4bff-b688-c43f5b1ae118"
+  }
+}]]></component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
         <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
       </MavenGeneralSettings>
     </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
   </component>
   <component name="OptimizeOnSaveOptions">
     <option name="myRunOnSave" value="true" />
@@ -56,22 +97,29 @@
     "RequestMappingsPanelOrder1": "1",
     "RequestMappingsPanelWidth0": "75",
     "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.HamropasalApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit5",
     "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5": "",
-    "git-widget-placeholder": "dikshanta-features",
+    "git-widget-placeholder": "pralad-features",
+    "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/dikshanta/personal/intern/hamro-pasal/src/main/java/com/praladneupane/hamropasal",
+    "last_opened_file_path": "D:/PROJECTTT",
     "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "rearrange.code.on.save": "true",
     "settings.editor.selected.configurable": "actions.on.save",
+    "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -88,8 +136,18 @@
   </component>
   <component name="RunManager">
     <configuration name="HamropasalApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <module name="hamropasal" />
+      <module name="PROJECTTT" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.praladneupane.hamropasal.HamropasalApplication" />
+      <extension name="net.ashald.envfile">
+        <option name="IS_ENABLED" value="false" />
+        <option name="IS_SUBST" value="false" />
+        <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+        <option name="IS_IGNORE_MISSING_FILES" value="false" />
+        <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+        <ENTRIES>
+          <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+        </ENTRIES>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -98,8 +156,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.26222.65" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.26222.65" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
       </set>
     </attachedChunks>
   </component>
@@ -120,6 +178,7 @@
       <workItem from="1784876331989" duration="1538000" />
       <workItem from="1784990566774" duration="647000" />
       <workItem from="1785041575842" duration="2034000" />
+      <workItem from="1785213490245" duration="10585000" />
     </task>
     <servers />
   </component>
