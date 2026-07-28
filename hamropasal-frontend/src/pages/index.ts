@@ -1,0 +1,11 @@
+export { Home } from './Home';
+export { About } from './About';
+export { Contact } from './Contact';
+export { Login } from './Login';
+export { Register } from './Register';
+export { Dashboard } from './Dashboard';
+export { Products } from './Products';
+export { Sales } from './Sales';
+export { Inventory } from './Inventory';
+export { Reports } from './Reports';
+export { Settings } from './Settings';

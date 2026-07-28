@@ -11,6 +11,7 @@ import com.praladneupane.hamropasal.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
     private final ProductService productService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<APIResponse<ProductResponse>> addProduct(@RequestBody @Valid CreateProductRequest request) {
         var response = productService.createProduct(request);
@@ -39,11 +41,13 @@ public class ProductController {
         return ResponseEntity.ok(APIResponse.success("Product fetched successfully", productService.getProduct(id)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public ResponseEntity<APIResponse<ProductResponse>> updateProduct(@RequestBody @Valid UpdateProductRequest request) {
         return ResponseEntity.ok(APIResponse.success("Product updated successfully", productService.updateProduct(request)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<APIResponse<String>> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);

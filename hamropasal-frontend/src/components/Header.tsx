@@ -1,148 +1,225 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
-  FaShoppingCart,
-  FaUser,
-  FaSearch,
-  FaBars,
-  FaChevronDown,
-  FaHome,
-  FaBoxOpen,
-  FaBoxes,
-  FaChartLine,
-  FaChartBar,
-  FaUsers,
-  FaTruckLoading
+  FaBars, FaTimes, FaBoxOpen, FaBoxes,
+  FaChartLine, FaChartBar, FaUsers, FaTruck,
+  FaTachometerAlt, FaCog, FaSignOutAlt, FaUserCircle,
 } from 'react-icons/fa';
-import { AiOutlineProfile, AiFillSetting } from 'react-icons/ai';
 import { FaRegBell } from 'react-icons/fa6';
+import { useAuth } from '../context/AuthContext';
+import { Logo, LogoIcon } from './Logo';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  adminOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard', icon: FaTachometerAlt },
+  { to: '/products',  label: 'Products',  icon: FaBoxOpen,    adminOnly: true },
+  { to: '/inventory', label: 'Inventory', icon: FaBoxes,      adminOnly: true },
+  { to: '/sales',     label: 'Sales',     icon: FaChartLine },
+  { to: '/reports',   label: 'Reports',   icon: FaChartBar,   adminOnly: true },
+  { to: '/customers', label: 'Customers', icon: FaUsers },
+  { to: '/suppliers', label: 'Suppliers', icon: FaTruck,      adminOnly: true },
+];
+
+const PUBLIC_PATHS = ['/', '/about', '/contact', '/login', '/register'];
 
 export const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
-  const [cartItems, setCartItems] = useState(2);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    navigate('/login');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+  const isPublicPage = PUBLIC_PATHS.includes(location.pathname);
+  const visibleNav = NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
 
   return (
-    <header className="bg-white border-b border-border shadow-sm">
-      <div className="container-custom flex h-16 items-center justify-between">
+    <header className="bg-white border-b sticky top-0 z-40">
+      <div className="max-w-screen-xl mx-auto px-3 sm:px-4 flex h-14 items-center justify-between gap-3">
+
         {/* Logo */}
-        <div className="flex items-center space-x-3">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-primary font-bold text-xl">H</span>
-            </div>
-            <span className="font-bold text-xl text-primary">Hamropasal</span>
-          </Link>
-        </div>
+        <Link
+          to={isAuthenticated ? '/dashboard' : '/'}
+          className="flex items-center gap-2 flex-shrink-0 text-slate-900 hover:text-slate-700 transition-colors"
+        >
+          <LogoIcon className="w-7 h-7 hidden sm:block" />
+          <span className="font-semibold text-base">Hamropasal</span>
+        </Link>
 
-        {/* Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Home</Link>
-          <Link to="/products" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Products</Link>
-          <Link to="/inventory" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Inventory</Link>
-          <Link to="/sales" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Sales</Link>
-          <Link to="/reports" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Reports</Link>
-          <Link to="/customers" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Customers</Link>
-          <Link to="/suppliers" className="text-text-secondary hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-gray-50">Suppliers</Link>
-        </div>
+        {/* Desktop nav */}
+        {isAuthenticated && !isPublicPage && (
+          <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+            {visibleNav.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  isActive(to)
+                    ? 'bg-slate-800 text-white'
+                    : 'text-gray-600 hover:text-slate-900 hover:bg-gray-100'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
-        {/* User actions */}
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/60" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-all w-40 md:w-60 placeholder:text-text-secondary/60"
-            />
-          </div>
+        {/* Right side */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isAuthenticated ? (
+            <>
+              {/* Notification bell */}
+              <button
+                className="relative p-2 text-gray-500 hover:text-slate-900 hover:bg-gray-100 rounded transition-colors"
+                aria-label="Notifications"
+              >
+                <FaRegBell className="text-base" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+              </button>
 
-          {/* Notifications */}
-          <div className="relative">
-            <FaRegBell className="text-xl text-secondary relative" />
-            {notifications > 0 && (
-              <span className="absolute -top-1 -right-1 flex w-5 h-5 items-center justify-center rounded-full bg-red-500 text-white text-xs">
-                {notifications}
-              </span>
-            )}
-          </div>
+              {/* User dropdown */}
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(v => !v)}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded border transition-colors ${
+                    userMenuOpen
+                      ? 'border-slate-300 bg-slate-50'
+                      : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
+                  }`}
+                  aria-label="User menu"
+                  aria-expanded={userMenuOpen}
+                >
+                  <FaUserCircle className="text-lg text-slate-600 flex-shrink-0" />
+                  <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-24 truncate">
+                    {user?.fullName?.split(' ')[0]}
+                  </span>
+                </button>
 
-          {/* Cart */}
-          <Link to="/cart" className="relative">
-            <FaShoppingCart className="text-xl text-secondary relative" />
-            {cartItems > 0 && (
-              <span className="absolute -top-1 -right-1 flex w-5 h-5 items-center justify-center rounded-full bg-primary text-white text-xs">
-                {cartItems}
-              </span>
-            )}
-          </Link>
-
-          {/* User menu */}
-          <div className="relative">
-            <button onClick={toggleMenu} className="flex items-center space-x-2 text-text-secondary hover:text-primary transition-colors">
-              <AiOutlineProfile className="h-5 w-5" />
-              <span className="hidden md:inline">Admin</span>
-              <FaChevronDown className="h-4 w-4" />
-            </button>
-
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-border rounded-xl shadow-lg z-50">
-                <Link to="/profile" className="flex items-center px-4 py-3 border-b border-border hover:bg-gray-50">
-                  <AiFillSetting className="mr-3 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-                <a href="#" className="flex items-center px-4 py-3 border-b border-border hover:bg-gray-50 text-red-600">
-                  <FaRegBell className="mr-3 h-4 w-4 text-red-500" />
-                  <span>Logout</span>
-                </a>
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white border rounded shadow-lg py-1 z-50">
+                    <div className="px-3 py-2 border-b">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.fullName}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+                      <span className="inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wide font-semibold bg-slate-100 text-slate-700">
+                        {user?.role}
+                      </span>
+                    </div>
+                    {isAdmin && (
+                      <Link
+                        to="/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <FaCog className="text-gray-400 flex-shrink-0 text-xs" />
+                        Settings
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <FaSignOutAlt className="flex-shrink-0 text-xs" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Mobile menu button */}
-        <button onClick={toggleMenu} className="md:hidden">
-          <FaBars className="text-xl text-secondary" />
-        </button>
+              {/* Mobile hamburger */}
+              {!isPublicPage && (
+                <button
+                  onClick={() => setMobileOpen(v => !v)}
+                  className="lg:hidden p-2 rounded text-gray-500 hover:bg-gray-100"
+                  aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+                >
+                  {mobileOpen ? <FaTimes className="text-base" /> : <FaBars className="text-base" />}
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="text-sm font-medium text-gray-600 hover:text-slate-900 px-3 py-1.5 rounded hover:bg-gray-100"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/register"
+                className="text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded"
+              >
+                Get started
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="bg-white border-t border-border">
-            <nav className="space-y-1">
-              <Link to="/" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaHome className="mr-3" />
-                Home
+      {/* Mobile drawer */}
+      {mobileOpen && isAuthenticated && !isPublicPage && (
+        <div className="lg:hidden border-t bg-white shadow-lg">
+          <div className="px-2.5 py-2 text-[10px] font-semibold flex items-center gap-1.5 bg-slate-50 text-slate-600 uppercase tracking-wide">
+            {isAdmin ? 'Administrator' : 'Cashier'}
+          </div>
+          <nav className="px-2 py-2 space-y-0.5">
+            {visibleNav.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium ${
+                  isActive(to)
+                    ? 'bg-slate-800 text-white'
+                    : 'text-gray-700 hover:bg-slate-100'
+                }`}
+              >
+                <Icon className="text-sm flex-shrink-0" />
+                {label}
               </Link>
-              <Link to="/products" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaBoxOpen className="mr-3" />
-                Products
+            ))}
+          </nav>
+          <div className="px-2 pb-2 pt-1 border-t">
+            {isAdmin && (
+              <Link
+                to="/settings"
+                className="flex items-center gap-2.5 px-3 py-2 rounded text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <FaCog className="text-sm flex-shrink-0" />
+                Settings
               </Link>
-              <Link to="/inventory" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaBoxes className="mr-3" />
-                Inventory
-              </Link>
-              <Link to="/sales" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaChartLine className="mr-3" />
-                Sales
-              </Link>
-              <Link to="/reports" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaChartBar className="mr-3" />
-                Reports
-              </Link>
-              <Link to="/customers" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaUsers className="mr-3" />
-                Customers
-              </Link>
-              <Link to="/suppliers" className="flex items-center px-6 py-4 text-text-secondary hover:text-primary">
-                <FaTruckLoading className="mr-3" />
-                Suppliers
-              </Link>
-            </nav>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 w-full px-3 py-2 rounded text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              <FaSignOutAlt className="text-sm flex-shrink-0" />
+              Sign out
+            </button>
           </div>
         </div>
       )}

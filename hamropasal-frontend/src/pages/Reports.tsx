@@ -1,320 +1,255 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  FaChartBar,
-  FaChartLine,
-  FaChartPie,
-  FaCalendarAlt,
-  FaFileAlt,
-  FaPrint,
-  FaFileExport
+  FaChartBar, FaChartLine, FaDownload, FaSyncAlt, FaBoxes,
+  FaUsers, FaTruck, FaExclamationTriangle, FaShoppingCart, FaMoneyBillWave,
 } from 'react-icons/fa';
-import { FaFileInvoiceDollar } from 'react-icons/fa6';
+import { salesApi, type Sale } from '../api/sales';
+import { reportsApi, type DashboardStats } from '../api/reports';
+import { formatCurrency } from '../lib/format';
 
-export const Reports = () => {
-  const [dateRange, setDateRange] = useState('');
-  const [reportType, setReportType] = useState('sales');
-  const [reportData, setReportData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  // Mock report data
-  const salesData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    datasets: [{
-      label: 'Sales ($)',
-      data: [1200, 1900, 3000, 5000, 2000, 3000, 4500, 3200, 4400, 2200, 5500, 4300],
-      backgroundColor: 'rgba(54, 162, 235, 0.2)',
-      borderColor: 'rgba(54, 162, 235, 1)',
-      borderWidth: 1
-    }]
-  };
+function buildMonthlyData(sales: Sale[]) {
+  const year = new Date().getFullYear();
+  const data = MONTHS.map(month => ({ month, revenue: 0, count: 0 }));
+  sales.forEach(s => {
+    const d = new Date(s.createdAt);
+    if (d.getFullYear() === year) {
+      data[d.getMonth()].revenue += s.netAmount;
+      data[d.getMonth()].count++;
+    }
+  });
+  return data;
+}
 
-  const inventoryData = {
-    labels: ['Electronics', 'Clothing', 'Groceries', 'Books', 'Toys'],
-    datasets: [{
-      label: 'Inventory Value ($)',
-      data: [12000, 8000, 15000, 5000, 3000],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(255, 206, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(153, 102, 255, 0.2)'
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)'
-      ],
-      borderWidth: 1
-    }]
-  };
+// ── SVG bar chart ─────────────────────────────────────────────────────────────
+function BarChart({ data }: { data: { month: string; value: number }[] }) {
+  const max  = Math.max(...data.map(d => d.value), 1);
+  const H    = 160;
+  const barW = 20;
+  const gap  = 10;
+  const width = data.length * (barW + gap);
+  return (
+    <div className="overflow-x-auto">
+      <svg width={Math.max(width, 300)} height={H + 28} className="w-full">
+        {data.map((d, i) => {
+          const barH = Math.max(4, (d.value / max) * H);
+          const x    = i * (barW + gap) + gap / 2;
+          return (
+            <g key={d.month}>
+              <rect x={x} y={H - barH} width={barW} height={barH} rx={3}
+                fill={d.value > 0 ? '#1e293b' : '#e5e7eb'} />
+              <text x={x + barW / 2} y={H + 16} textAnchor="middle" fill="#9ca3af" fontSize={10}>
+                {d.month}
+              </text>
+              {d.value > 0 && <title>{d.month}: {formatCurrency(d.value)}</title>}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
-  const purchaseData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [{
-      label: 'Purchases ($)',
-      data: [650, 590, 800, 810, 560, 550],
-      backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      borderColor: 'rgba(75, 192, 192, 1)',
-      borderWidth: 1
-    }]
-  };
+// ── Stat card ─────────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon: Icon, color, sub }: {
+  label: string; value: string | number; icon: React.ElementType; color: string; sub?: string;
+}) {
+  return (
+    <div className="bg-white rounded border border-gray-200 p-3 sm:p-4 flex items-start gap-3">
+      <div className={`w-10 h-10 rounded flex items-center justify-center flex-shrink-0 ${color}`}>
+        <Icon className="text-white text-base" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+        <p className="text-base sm:text-lg font-bold text-gray-900 truncate">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
 
-  // Generate report based on type and date range
-  const generateReport = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      switch (reportType) {
-        case 'sales':
-          setReportData(salesData);
-          break;
-        case 'inventory':
-          setReportData(inventoryData);
-          break;
-        case 'purchases':
-          setReportData(purchaseData);
-          break;
-        default:
-          setReportData(salesData);
-      }
-      setLoading(false);
-    }, 1000);
-  };
-
-  // Date ranges for quick selection
-  const dateRanges = [
-    { label: 'Today', value: 'today' },
-    { label: 'Yesterday', value: 'yesterday' },
-    { label: 'Last 7 Days', value: 'last7days' },
-    { label: 'This Month', value: 'thismonth' },
-    { label: 'Last Month', value: 'lastmonth' },
-    { label: 'This Year', value: 'thisyear' },
-    { label: 'Custom Range', value: 'custom' }
+function exportCSV(sales: Sale[]) {
+  const rows = [
+    ['ID', 'Date', 'Cashier', 'Items', 'Total', 'Tax', 'Net', 'Payment'],
+    ...sales.map(s => [s.id, new Date(s.createdAt).toLocaleDateString(), s.cashierName,
+      s.items.length, s.totalAmount.toFixed(2), s.taxAmount.toFixed(2), s.netAmount.toFixed(2), s.paymentMethod]),
   ];
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `hamropasal-report-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
 
-  // Report types
-  const reportTypes = [
-    { value: 'sales', label: 'Sales Report' },
-    { value: 'inventory', label: 'Inventory Report' },
-    { value: 'purchases', label: 'Purchase Report' },
-    { value: 'tax', label: 'Tax Report' },
-    { value: 'profit', label: 'Profit & Loss' }
-  ];
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {/* Loading state */}
-        <div className="bg-white rounded-xl p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Reports</h2>
-            <div className="flex space-x-3">
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-                <FaFileAlt /> Generate Report
-              </button>
-              <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                <FaPrint /> Print
-              </button>
-              <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                <FaFileExport /> Export
-              </button>
-            </div>
+function PaymentBreakdown({ sales }: { sales: Sale[] }) {
+  const totals: Record<string, number> = {};
+  sales.forEach(s => { totals[s.paymentMethod] = (totals[s.paymentMethod] ?? 0) + s.netAmount; });
+  const total = Object.values(totals).reduce((a, b) => a + b, 0) || 1;
+  const colors: Record<string, string> = { CASH: 'bg-green-500', ESEWA: 'bg-purple-500', BANKING: 'bg-blue-500' };
+  const labels: Record<string, string> = { CASH: 'Cash', ESEWA: 'eSewa', BANKING: 'Banking' };
+  return (
+    <div className="space-y-3">
+      {Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([method, amount]) => (
+        <div key={method}>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-700 font-medium">{labels[method] ?? method}</span>
+            <span className="text-gray-500">{formatCurrency(amount)} ({((amount / total) * 100).toFixed(1)}%)</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-xl p-4">
-              <h3 className="text-sm font-medium text-blue-600">Total Reports Generated</h3>
-              <p className="text-2xl font-bold text-gray-900 mt-1">124</p>
-            </div>
-            <div className="h-96 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-2 text-gray-500">Generating report...</span>
-            </div>
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className={`h-2 rounded-full ${colors[method] ?? 'bg-gray-400'}`}
+              style={{ width: `${(amount / total) * 100}%` }} />
           </div>
         </div>
-      </div>
-    );
-  }
+      ))}
+      {Object.keys(totals).length === 0 && <p className="text-sm text-gray-400">No sales data yet</p>}
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+export const Reports = () => {
+  const [sales, setSales]   = useState<Sale[]>([]);
+  const [stats, setStats]   = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState('');
+  const [chartType, setChartType] = useState<'revenue' | 'count'>('revenue');
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const [salesRes, statsRes] = await Promise.allSettled([
+        salesApi.getAll(), reportsApi.getDashboardStats(),
+      ]);
+      if (salesRes.status === 'fulfilled') setSales(salesRes.value.data);
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+    } catch (err: any) {
+      setError(err.message ?? 'Failed to load reports');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const monthly      = buildMonthlyData(sales);
+  const chartData    = monthly.map(d => ({ month: d.month, value: chartType === 'revenue' ? d.revenue : d.count }));
+  const totalRevenue = sales.reduce((s, x) => s + x.netAmount, 0);
+  const totalTax     = sales.reduce((s, x) => s + x.taxAmount, 0);
+  const avgSale      = sales.length > 0 ? totalRevenue / sales.length : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 max-w-screen-xl mx-auto">
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Reports & Analytics</h2>
-          <div className="flex space-x-3">
-            <button
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              onClick={generateReport}
-            >
-              <FaFileAlt />
-              Generate Report
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              onClick={() => {/* Print report */}}
-            >
-              <FaPrint />
-              Print
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              onClick={() => {/* Export report */}}
-            >
-              <FaFileExport />
-              Export
-            </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Reports & Analytics</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Business performance overview</p>
+        </div>
+        <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+          <button onClick={() => exportCSV(sales)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
+            <FaDownload className="text-xs" /> Export CSV
+          </button>
+          <button onClick={load}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
+            <FaSyncAlt className={`text-xs ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
+      </div>
+
+      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">{error}</div>}
+
+      {/* Stats from API */}
+      {stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+          <StatCard label="Total Products"   value={stats.totalProducts}   icon={FaBoxes}             color="bg-slate-800" />
+          <StatCard label="Total Customers"  value={stats.totalCustomers}  icon={FaUsers}             color="bg-blue-500" />
+          <StatCard label="Total Suppliers"  value={stats.totalSuppliers}  icon={FaTruck}             color="bg-teal-500" />
+          <StatCard label="Low Stock"        value={stats.lowStockProducts} icon={FaExclamationTriangle}
+            color={stats.lowStockProducts > 0 ? 'bg-red-500' : 'bg-green-500'}
+            sub={stats.lowStockProducts > 0 ? 'Needs attention' : 'All stocked'} />
+        </div>
+      )}
+
+      {/* Sales summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+        <StatCard label="Transactions"    value={sales.length}        icon={FaShoppingCart} color="bg-violet-500" />
+        <StatCard label="Total Revenue"   value={formatCurrency(totalRevenue)}   icon={FaMoneyBillWave} color="bg-green-500" />
+        <StatCard label="Total Tax"       value={formatCurrency(totalTax)}       icon={FaChartLine}    color="bg-orange-500" />
+        <StatCard label="Avg Transaction" value={formatCurrency(avgSale)}        icon={FaChartBar}     color="bg-pink-500" />
+      </div>
+
+      {/* Chart + Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-5">
+        <div className="lg:col-span-2 bg-white rounded border border-gray-200 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h2 className="font-semibold text-gray-900">Monthly Performance ({new Date().getFullYear()})</h2>
+            <div className="flex rounded border border-gray-300 overflow-hidden text-xs self-start">
+              <button onClick={() => setChartType('revenue')}
+                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'revenue' ? 'bg-slate-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                Revenue
+              </button>
+              <button onClick={() => setChartType('count')}
+                className={`px-3 py-1.5 font-medium transition-colors ${chartType === 'count' ? 'bg-slate-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                Transactions
+              </button>
+            </div>
           </div>
+          {loading ? (
+            <div className="h-48 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-slate-800 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : <BarChart data={chartData} />}
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-            <div className="relative">
-              <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              >
-                <option value="">Select Date Range</option>
-                {dateRanges.map(range => (
-                  <option key={range.value} value={range.value}>
-                    {range.label}
-                  </option>
+        <div className="bg-white rounded border border-gray-200 p-4">
+          <h2 className="font-semibold text-gray-900 mb-4">Payment Methods</h2>
+          {loading ? (
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-8 bg-gray-200 rounded animate-pulse" />)}</div>
+          ) : <PaymentBreakdown sales={sales} />}
+        </div>
+      </div>
+
+      {/* Recent transactions */}
+      <div className="bg-white rounded border border-gray-200 p-4">
+        <h2 className="font-semibold text-gray-900 mb-4">Recent Transactions</h2>
+        {loading ? (
+          <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />)}</div>
+        ) : sales.length === 0 ? (
+          <div className="py-8 text-center text-gray-400">
+            <FaChartBar className="mx-auto text-3xl mb-2" />
+            <p className="text-sm">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[400px]">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium">#</th>
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium hidden sm:table-cell">Date</th>
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium">Cashier</th>
+                  <th className="text-center py-2 px-3 text-gray-500 font-medium">Items</th>
+                  <th className="text-right py-2 px-3 text-gray-500 font-medium">Amount</th>
+                  <th className="text-center py-2 px-3 text-gray-500 font-medium hidden sm:table-cell">Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.slice(0, 10).map(s => (
+                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <td className="py-2.5 px-3 text-gray-700">#{s.id}</td>
+                    <td className="py-2.5 px-3 text-gray-500 hidden sm:table-cell text-xs">{new Date(s.createdAt).toLocaleDateString()}</td>
+                    <td className="py-2.5 px-3 text-gray-700">{s.cashierName}</td>
+                    <td className="py-2.5 px-3 text-center text-gray-600">{s.items.length}</td>
+                    <td className="py-2.5 px-3 text-right font-medium text-gray-900">{formatCurrency(s.netAmount)}</td>
+                    <td className="py-2.5 px-3 text-center hidden sm:table-cell text-xs text-gray-500">{s.paymentMethod}</td>
+                  </tr>
                 ))}
-              </select>
-            </div>
+              </tbody>
+            </table>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
-            <select
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-            >
-              {reportTypes.map(type => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Report Display */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {reportTypes.find(t => t.value === reportType)?.label || 'Report'}
-            </h3>
-            <div className="flex space-x-2">
-              <button
-                className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                onClick={() => {/* Change chart type to bar */}}
-              >
-                Bar Chart
-              </button>
-              <button
-                className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded"
-                onClick={() => {/* Change chart type to line */}}
-              >
-                Line Chart
-              </button>
-              <button
-                className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                onClick={() => {/* Change chart type to pie */}}
-              >
-                Pie Chart
-              </button>
-            </div>
-          </div>
-
-          {/* Chart placeholder */}
-          <div className="h-96 bg-gray-50 rounded-lg">
-            {reportData ? (
-              // In a real app, we would render a chart here using a library like Chart.js or Recharts
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="text-5xl text-indigo-500 mb-4">
-                    <FaChartBar />
-                  </div>
-                  <p className="text-gray-600">Chart Visualization</p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {reportType === 'sales' ? 'Monthly Sales Trend' :
-                     reportType === 'inventory' ? 'Inventory Value by Category' :
-                     'Purchase Trends'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                Select report type and date range, then click "Generate Report"
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Reports */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Reports</h3>
-          <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
-            View All Reports
-          </a>
-        </div>
-        <div className="space-y-4">
-          {/* Report items */}
-          <div className="flex items-center p-4 border border-gray-200 rounded-lg">
-            <div className="p-3 mr-4 bg-blue-50 rounded-full">
-              <FaFileInvoiceDollar className="text-xl text-blue-500" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-800">Monthly Sales Report</h4>
-              <p className="text-sm text-gray-600">Generated on Jan 15, 2024</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-              >
-                View
-              </button>
-              <button
-                className="px-3 py-1 text-xs bg-gray-200 text-gray-800 rounded"
-              >
-                Download
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center p-4 border border-gray-200 rounded-lg">
-            <div className="p-3 mr-4 bg-green-50 rounded-full">
-              <FaChartBar className="text-xl text-green-500" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-800">Inventory Summary</h4>
-              <p className="text-sm text-gray-600">Generated on Jan 14, 2024</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded"
-              >
-                View
-              </button>
-              <button
-                className="px-3 py-1 text-xs bg-gray-200 text-gray-800 rounded"
-              >
-                Download
-              </button>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
